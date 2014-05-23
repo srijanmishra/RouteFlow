@@ -21,3 +21,7 @@ class RFProtocolFactory(IPC.IPCMessageFactory):
             return ControllerRegister()
         if type_ == ELECT_MASTER:
             return ElectMaster()
+        if type_ == DATA_PLANE_LINK:
+            return DataPlaneLink()
+        if type_ == INTERFACE_REGISTER:
+            return InterfaceRegister()

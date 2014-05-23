@@ -21,6 +21,10 @@ enum {
 	ROUTE_MOD,
 	CONTROLLER_REGISTER,
 	ELECT_MASTER
+    	DATA_PLANE_LINK,
+    	METER_MOD,
+    	GROUP_MOD,
+	INTERFACE_REGISTER
 };
 
 class PortRegister : public IPCMessage {

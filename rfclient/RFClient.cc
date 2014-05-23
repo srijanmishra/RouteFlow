@@ -17,6 +17,62 @@
 
 using namespace std;
 
+/* Get the IP, mask, broadcast addresses of the interface */
+int get_addresses(const char * ifname, uint8_t ipaddr[], uint8_t mask[], uint8_t broad[]){
+	struct sockaddr_in sin;
+	struct ifreq ifr;
+	struct packet_mreq mr;
+	int sock;
+	in_addr ip_addr;
+	in_addr subnet;
+	in_addr broadcast;
+
+	memset(&sin, 0, sizeof(struct sockaddr));
+	memset(&ifr, 0, sizeof(ifr));
+	memset(&mr, 0, sizeof(mr));
+	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock < 0) {
+		return -1;
+	}
+
+	// get the IP address
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	ifr.ifr_addr.sa_family = AF_INET;
+	if (-1 == ioctl(sock, SIOCGIFADDR, &ifr)) {
+		perror("ioctl(SIOCGIFHWADDR) - get IP address");
+	}
+	std::memcpy(&sin, &ifr.ifr_addr, sizeof(struct sockaddr));
+	ip_addr = sin.sin_addr;
+    syslog(LOG_INFO, "IP %s - %s\n" , ifname , inet_ntoa(ip_addr) );
+
+	// get the subnet mask
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	ifr.ifr_addr.sa_family = AF_INET;
+	if (ioctl(sock, SIOCGIFNETMASK, &ifr)< 0)    {
+		perror("ioctl(SIOCGIFHWADDR) - get subnet");
+	}
+	std::memcpy(&sin, &ifr.ifr_addr, sizeof(struct sockaddr));
+	subnet = sin.sin_addr;
+    syslog(LOG_INFO, "Mask %s - %s\n" , ifname , inet_ntoa(subnet) );
+
+	// get the broadcast address
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	ifr.ifr_addr.sa_family = AF_INET;
+	if (ioctl(sock, SIOCGIFBRDADDR, &ifr)< 0)    {
+		perror("ioctl(SIOCGIFHWADDR) - get broadcast address");
+	}
+	std::memcpy(&sin, &ifr.ifr_addr, sizeof(struct sockaddr));
+	broadcast = sin.sin_addr;
+    syslog(LOG_INFO, "Broad %s - %s\n" , ifname , inet_ntoa(broadcast) );
+
+	close(sock);
+
+    std::memcpy(ipaddr, &ip_addr, 4 );
+    std::memcpy(mask, &subnet, 4 );
+    std::memcpy(broad, &broadcast, 4 );
+	return 0;
+}
+
 /* Get the MAC address of the interface. */
 int get_hwaddr_byname(const char * ifname, uint8_t hwaddr[]) {
     struct ifreq ifr;
@@ -248,6 +304,10 @@ void RFClient::load_interfaces() {
 	        size_t pos = ifaceName.find_first_of("123456789");
 	        string port_num = ifaceName.substr(pos, ifaceName.length() - pos + 1);
 	        uint32_t port_id = atoi(port_num.c_str());
+            uint8_t ipaddr[4];
+			uint8_t mask[4];
+			uint8_t broad[4];
+			get_addresses(ifa->ifa_name, ipaddr, mask, broad);
 
 	        Interface interface;
 	        interface.port = port_id;
@@ -255,7 +315,10 @@ void RFClient::load_interfaces() {
 	        interface.hwaddress = MACAddress(hwaddress);
 	        interface.active = true;
 
-	        printf("Loaded interface %s\n", interface.name.c_str());
+		    InterfaceRegister msg(interface.name, this->id, interface.port, interface.address, interface.netmask, interface.hwaddress);
+		    this->ipc->send(RFCLIENT_RFSERVER_CHANNEL, RFSERVER_ID, msg);
+	        
+            printf("Loaded interface %s\n", interface.name.c_str());
 
 	        this->interfaces[interface.port] = interface;
 	        intfNum++;
@@ -284,6 +347,8 @@ int main(int argc, char* argv[]) {
 
     while ((c = getopt (argc, argv, "n:i:a:")) != -1)
         switch (c) {
+
+
             case 'n':
                 fprintf (stderr, "Custom naming not supported yet.");
                 exit(EXIT_FAILURE);

@@ -69,6 +69,107 @@ string PortRegister::str() {
     return ss.str();
 }
 
+
+InterfaceRegister::InterfaceRegister() {
+	set_name("");
+	set_vm_id(0);
+	set_vm_port(0);
+	set_address(IPAddress(IPV4));
+	set_netmask(IPAddress(IPV4));
+	set_hwaddress(MACAddress());
+}
+
+InterfaceRegister::InterfaceRegister(string name, uint64_t vm_id, uint32_t vm_port, IPAddress address, IPAddress netmask, MACAddress hwaddress) {
+	set_name(name);
+    set_vm_id(vm_id);
+    set_vm_port(vm_port);
+	set_address(address);
+	set_netmask(netmask);
+	set_hwaddress(hwaddress);
+}
+
+int InterfaceRegister::get_type() {
+    return INTERFACE_REGISTER;
+}
+
+string InterfaceRegister::get_name(){
+    return this->name;
+}
+void InterfaceRegister::set_name(string name) {
+    this->name = name;
+}
+
+uint64_t InterfaceRegister::get_vm_id(){
+    return this->vm_id;
+}
+void InterfaceRegister::set_vm_id(uint64_t vm_id) {
+    this->vm_id = vm_id;
+}
+
+uint32_t InterfaceRegister::get_vm_port(){
+    return this->vm_port;
+}
+void InterfaceRegister::set_vm_port(uint32_t vm_port) {
+    this->vm_port = vm_port;
+}
+
+IPAddress InterfaceRegister::get_address(){
+    return this->address;
+}
+void InterfaceRegister::set_address(IPAddress address) {
+    this->address = address;
+}
+
+IPAddress InterfaceRegister::get_netmask(){
+    return this->netmask;
+}
+void InterfaceRegister::set_netmask(IPAddress netmask) {
+    this->netmask = netmask;
+}
+
+MACAddress InterfaceRegister::get_hwaddress(){
+    return this->hwaddress;
+}
+void InterfaceRegister::set_hwaddress(MACAddress hwaddress) {
+    this->hwaddress = hwaddress;
+}
+
+void InterfaceRegister::from_BSON(const char* data) {
+    mongo::BSONObj obj(data);
+    set_name(string_to<string>(obj["name"].String()));
+    set_vm_id(string_to<uint64_t>(obj["vm_id"].String()));
+    set_vm_port(string_to<uint32_t>(obj["vm_port"].String()));
+    set_address(IPAddress(IPV4, obj["address"].String()));
+    set_netmask(IPAddress(IPV4, obj["netmask"].String()));
+    set_hwaddress(MACAddress(obj["hwaddress"].String()));
+}
+
+const char* InterfaceRegister::to_BSON() {
+    mongo::BSONObjBuilder _b;
+    _b.append("name", to_string<string>(get_name()));
+    _b.append("vm_id", to_string<uint64_t>(get_vm_id()));
+    _b.append("vm_port", to_string<uint32_t>(get_vm_port()));
+    _b.append("address", get_address().toString());
+    _b.append("netmask", get_netmask().toString());
+    _b.append("hwaddress", get_hwaddress().toString());
+    mongo::BSONObj o = _b.obj();
+    char* data = new char[o.objsize()];
+    memcpy(data, o.objdata(), o.objsize());
+    return data;
+}
+
+string InterfaceRegister::str() {
+    stringstream ss;
+    ss << "InterfaceRegister" << endl;
+    ss << "  name: " << to_string<string>(get_name()) << endl;
+    ss << "  vm_id: " << to_string<uint64_t>(get_vm_id()) << endl;
+    ss << "  vm_port: " << to_string<uint32_t>(get_vm_port()) << endl;
+    ss << "  address: " << get_address().toString() << endl;
+    ss << "  netmask: " << get_netmask().toString() << endl;
+    ss << "  hwaddress: " << get_hwaddress().toString() << endl;
+    return ss.str();
+}
+
 PortConfig::PortConfig() {
     set_vm_id(0);
     set_vm_port(0);

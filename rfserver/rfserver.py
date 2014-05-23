@@ -18,6 +18,7 @@ from rflib.defs import *
 from rflib.types.Match import *
 from rflib.types.Action import *
 from rflib.types.Option import *
+from rflib.components.resources import *
 
 from rftable import *
 
@@ -25,6 +26,10 @@ from rftable import *
 REGISTER_IDLE = 0
 REGISTER_ASSOCIATED = 1
 REGISTER_ISL = 2
+
+DEFAULT_TOPO_PHY_ID = 1
+DEFAULT_TOPO_VIRT_ID = 2
+DEFAULT_CT_ID = 0
 
 class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
     def __init__(self, configfile, islconffile):
@@ -45,6 +50,11 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
                                                    RFSERVER_ID,
                                                    threading.Thread,
                                                    time.sleep)
+        
+        self.topologies = Topologies()
+        self.topologies.register_topology(DEFAULT_TOPO_PHY_ID, 'physical', ct_id=DEFAULT_CT_ID)
+        self.topologies.register_topology(DEFAULT_TOPO_VIRT_ID, 'virtual')
+        
         self.ipc.listen(RFCLIENT_RFSERVER_CHANNEL, self, self, False)
         self.ipc.listen(RFSERVER_RFPROXY_CHANNEL, self, self, True)
 
@@ -53,17 +63,26 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
         if type_ == PORT_REGISTER:
             self.register_vm_port(msg.get_vm_id(), msg.get_vm_port(),
                                   msg.get_hwaddress())
+        elif type_ == INTERFACE_REGISTER:
+            self.topologies.modify_virtual_topology(self.topologies.get_topology(DEFAULT_TOPO_VIRT_ID, 'virtual'), msg)
         elif type_ == ROUTE_MOD:
+            self.topologies.modify_virtual_topology(self.topologies.get_topology(DEFAULT_TOPO_VIRT_ID, 'virtual'), msg)
             self.register_route_mod(msg)
         elif type_ == DATAPATH_PORT_REGISTER:
             self.register_dp_port(msg.get_ct_id(),
                                   msg.get_dp_id(),
                                   msg.get_dp_port())
+            if not is_rfvs(msg.get_dp_id()):
+                self.topologies.modify_physical_topology(self.topologies.get_topology(DEFAULT_TOPO_PHY_ID, 'physical'), msg)
         elif type_ == DATAPATH_DOWN:
             self.set_dp_down(msg.get_ct_id(), msg.get_dp_id())
+            self.topologies.modify_physical_topology(self.topologies.get_topology(DEFAULT_TOPO_PHY_ID, 'physical'), msg)
         elif type_ == VIRTUAL_PLANE_MAP:
             self.map_port(msg.get_vm_id(), msg.get_vm_port(),
                           msg.get_vs_id(), msg.get_vs_port())
+            self.topologies.modify_virtual_topology(self.topologies.get_topology(DEFAULT_TOPO_VIRT_ID, 'virtual'), msg)
+        elif type_ == DATA_PLANE_LINK:
+            self.topologies.modify_physical_topology(self.topologies.get_topology(DEFAULT_TOPO_PHY_ID, 'physical'), msg)
         else:
             return False
         return True
@@ -402,6 +421,10 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
             msg = DataPlaneMap(ct_id=entry.ct_id,
                                dp_id=entry.dp_id, dp_port=entry.dp_port,
                                vs_id=vs_id, vs_port=vs_port)
+            #Updates topologies and the mapping between topologies 
+            self.topologies.modify_physical_topology(self.topologies.get_topology(DEFAULT_TOPO_PHY_ID, 'physical'), msg)
+            self.topologies.modify_virtual_topology_mapping(self.topologies.get_topology(DEFAULT_TOPO_VIRT_ID, 'virtual'), vs_id, vs_port, entry.dp_id, entry.dp_port)
+            self.topologies.modify_physical_topology_mapping(self.topologies.get_topology(DEFAULT_TOPO_PHY_ID, 'physical'), vs_id, vs_port, vm_id, vm_port)
             self.ipc.send(RFSERVER_RFPROXY_CHANNEL, str(entry.ct_id), msg)
             self.log.info("Mapping client-datapath association "
                           "(vm_id=%s, vm_port=%i, dp_id=%s, "

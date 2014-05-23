@@ -339,6 +339,17 @@ int FlowTable::updateRouteTable(struct nlmsghdr *n) {
     char intf[IF_NAMESIZE + 1];
     memset(intf, 0, IF_NAMESIZE + 1);
 
+	/* MULTIPATH ROUTE ENTRIES */
+	int num_rentries_multipath = MAX_RENTRIES_MULTIPATH;
+	int rt_multipath = 0;
+	bool is_multipath = false;
+	char gwmp[num_rentries_multipath][INET_ADDRSTRLEN];
+	char intfmp[num_rentries_multipath][IF_NAMESIZE + 1];
+	for (int i = 0; i<num_rentries_multipath; i++){
+		memset(gwmp[i], 0, INET_ADDRSTRLEN);
+		memset(intfmp[i], 0, IF_NAMESIZE + 1);
+	}
+
     struct rtattr *rtattr_ptr;
     rtattr_ptr = (struct rtattr *) RTM_RTA(rtmsg_ptr);
     int rtmsg_len = RTM_PAYLOAD(n);
@@ -361,34 +372,41 @@ int FlowTable::updateRouteTable(struct nlmsghdr *n) {
             if_indextoname(*((int *) RTA_DATA(rtattr_ptr)), (char *) intf);
             break;
         case RTA_MULTIPATH: {
-            struct rtnexthop *rtnhp_ptr = (struct rtnexthop *) RTA_DATA(
-                    rtattr_ptr);
-            int rtnhp_len = RTA_PAYLOAD(rtattr_ptr);
+            struct rtnexthop *rtnhp_ptr = (struct rtnexthop *) RTA_DATA(rtattr_ptr);
+			int rtnhp_len = RTA_PAYLOAD(rtattr_ptr);
+            is_multipath = true;
+			for (;;)
+			{
+				if (rtnhp_len < (int) sizeof(*rtnhp_ptr)) {
+					break;
+				}
 
-            if (rtnhp_len < (int) sizeof(*rtnhp_ptr)) {
-                break;
-            }
+				if (rtnhp_ptr->rtnh_len > rtnhp_len) {
+					break;
+				}
 
-            if (rtnhp_ptr->rtnh_len > rtnhp_len) {
-                break;
-            }
-
-            if_indextoname(rtnhp_ptr->rtnh_ifindex, (char *) intf);
-
-            int attrlen = rtnhp_len - sizeof(struct rtnexthop);
-
-            if (attrlen) {
-                struct rtattr *attr = RTNH_DATA(rtnhp_ptr);
-
-                for (; RTA_OK(attr, attrlen); attr = RTA_NEXT(attr, attrlen))
-                    if ((attr->rta_type == RTA_GATEWAY)) {
-                        if (rta_to_ip(rtmsg_ptr->rtm_family, RTA_DATA(attr),
-                                      rentry->gateway) < 0) {
+				if (rtnhp_ptr->rtnh_len > sizeof(*rtnhp_ptr) ){
+					if_indextoname(rtnhp_ptr->rtnh_ifindex, (char *) intfmp[rt_multipath]);				
+					int attrlen = rtnhp_ptr->rtnh_len - sizeof(*rtnhp_ptr);
+					struct rtattr *attr = RTNH_DATA(rtnhp_ptr);
+					while (RTA_OK(attr,attrlen)){
+						if ((attr->rta_type <= RTA_MAX) && (attr->rta_type == RTA_GATEWAY)) {
+                            inet_ntop(AF_INET, RTA_DATA(attr), gwmp[rt_multipath], 128);
+                        /*
+                        if (rta_to_ip(rtmsg_ptr->rtm_family, RTA_DATA(rtattr_ptr), rentry->gateway) < 0) {
                             return 0;
                         }
-                        break;
-                    }
-            }
+                        */
+                            //std::cout << "New multipath gw: " << gwmp[rt_multipath] << ", numero: " << rt_multipath << ", tipo: " << n->nlmsg_type << ", int: " << intfmp[rt_multipath] << std::endl;
+						}
+						attr = RTA_NEXT(attr, attrlen);
+					}
+				}
+
+				rtnhp_len -= NLMSG_ALIGN(rtnhp_ptr->rtnh_len);
+				rtnhp_ptr = RTNH_NEXT(rtnhp_ptr);
+				rt_multipath++;
+			}//End for(;;)
         }
             break;
         default:
@@ -396,26 +414,70 @@ int FlowTable::updateRouteTable(struct nlmsghdr *n) {
         }
     }
 
-    rentry->netmask = IPAddress(IPV4, rtmsg_ptr->rtm_dst_len);
-
-    if (getInterface(intf, "route", rentry->interface) != 0) {
-        return 0;
+    if (is_multipath == true) 
+    {
+        for (int intfnum = 0; intfnum<rt_multipath; intfnum++) {
+            if (getInterface(intfmp[intfnum], "route", rentry->interface) != 0) {
+                return 0;
+            }
+        }
+    }
+    else
+    {    
+        if (getInterface(intf, "route", rentry->interface) != 0) {
+            return 0;
+        }
     }
 
+    rentry->netmask = IPAddress(IPV4, rtmsg_ptr->rtm_dst_len);
     string net = rentry->address.toString();
     string mask = rentry->netmask.toString();
-    string gw = rentry->gateway.toString();
+    string gw;
 
     switch (n->nlmsg_type) {
         case RTM_NEWROUTE:
-            std::cout << "netlink->RTM_NEWROUTE: net=" << net << ", mask="
-                      << mask << ", gw=" << gw << std::endl;
-            FlowTable::pendingRoutes.push(PendingRoute(RMT_ADD, *rentry));
+            if (is_multipath == true) 
+            {
+            	for (int i = 0; i<rt_multipath; i++){
+                    if (inet_addr(gwmp[i]) == INADDR_NONE) {
+                        return 0;
+				    }
+			        rentry->gateway = IPAddress(IPV4, gwmp[i]);
+                    gw = rentry->gateway.toString();
+                    std::cout << "netlink->RTM_NEWROUTE (RTA_MULTIPATH): net=" << net << ", mask="
+                              << mask << ", gw=" << gw << std::endl;
+                    FlowTable::pendingRoutes.push(PendingRoute(RMT_ADD, *rentry));
+                }
+            }
+            else
+            {
+                gw = rentry->gateway.toString();
+                std::cout << "netlink->RTM_NEWROUTE: net=" << net << ", mask="
+                          << mask << ", gw=" << gw << std::endl;
+                FlowTable::pendingRoutes.push(PendingRoute(RMT_ADD, *rentry));
+            }
             break;
         case RTM_DELROUTE:
-            std::cout << "netlink->RTM_DELROUTE: net=" << net << ", mask="
-                      << mask << ", gw=" << gw << std::endl;
-            FlowTable::pendingRoutes.push(PendingRoute(RMT_DELETE, *rentry));
+            if (is_multipath == true)
+            {
+            	for (int i = 0; i<rt_multipath; i++){
+                    if (inet_addr(gwmp[i]) == INADDR_NONE) {
+                        return 0;
+				    }
+		            rentry->gateway = IPAddress(IPV4, gwmp[i]);
+                    gw = rentry->gateway.toString();
+                    std::cout << "netlink->RTM_DELROUTE (RTA_MULTIPATH): net=" << net << ", mask="
+                              << mask << ", gw=" << gw << std::endl;
+                    FlowTable::pendingRoutes.push(PendingRoute(RMT_DELETE, *rentry));
+                    }
+            }
+            else
+            {
+                gw = rentry->gateway.toString();
+                std::cout << "netlink->RTM_DELROUTE: net=" << net << ", mask="
+                          << mask << ", gw=" << gw << std::endl;
+                FlowTable::pendingRoutes.push(PendingRoute(RMT_DELETE, *rentry));
+            }
             break;
     }
 

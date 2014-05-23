@@ -20,6 +20,8 @@ IPCMessage* RFProtocolFactory::buildForType(int type) {
             return new ControllerRegister();
         case ELECT_MASTER:
             return new ElectMaster();
+        case INTERFACE_REGISTER:
+            return new InterfaceRegister();
         default:
             return NULL;
     }
