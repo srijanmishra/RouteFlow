@@ -136,7 +136,8 @@ if [ "$ACTION" != "RESET" ]; then
         PROTOCOLS="OpenFlow10"
         ;;
     RYU)
-        ryu-manager $RF_HOME/ryu-rfproxy/rfproxy.py &
+	pwd
+        ryu-manager ryu-rfproxy/rfproxy.py &
         ;;
     esac
     wait_port_listen $CONTROLLER_PORT
