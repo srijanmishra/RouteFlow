@@ -154,7 +154,7 @@ $ scp ipconf mininet@[guest address]:/home/mininet
 
 3. Then start the network:
 ```
-$ sudo mn --switch user --custom mininet/custom/topo-4sw-4host.py --topo=rftest2 --controller=remote,ip=[host address],port=6633 --pre=ipconf
+$ sudo mn --switch user --custom mininet/custom/topo-4sw-4host.py --topo=rftest2 --controller=remote,ip=[host address],port=6653 --pre=ipconf
 ```
 
 Wait for the network to converge (it should take a few seconds), and try to 
