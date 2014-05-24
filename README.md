@@ -68,6 +68,33 @@ $ git clone git://github.com/routeflow/RouteFlow.git
 make rfclient
 ```
 
+4. Install `ryu`
+```
+cd ryu
+sudo apt-get install python-dev python-eventlet python-routes \
+    python-webob python-paramiko python-netaddr \
+    python-lxml python-oslo-config python-msgpack
+
+sudo python ./setup.py install 
+```
+
+5. Install `mininet`
+```
+cd  $HOME/
+git clone git://github.com/mininet/mininet
+mininet/util/install.sh -n3fxw
+```
+
+6. Install `ofdissector`
+```
+$ sudo apt-get install scons
+$ git clone https://github.com/CPqD/ofdissector
+$ cd ofdissector/src
+$ export WIRESHARK=/usr/include/wireshark
+$ scons install
+```
+
+
 That's it! Now you can run tests 1 and 2. The setup to run them is described in 
 the "Running" section.
 
@@ -90,31 +117,11 @@ experience with or questions about setting up RouteFlow on a particular
 technology, contact us! See the "Support" section.
 
 
-## Test scenarios
+## Test scenario
 
 Default configuration files are provided for these scenarios in the `rftest` 
 directory (you don't need to change anything).
 You can stops them at any time by pressing CTRL+C.
-
-### rftest1
-
-> For a description of this scenario, see its 
-> [tutorial](https://github.com/routeflow/RouteFlow/wiki/Tutorial-1:-rftest1).
-
-1. Run:
-```
-$ sudo ./rftest1
-```
-
-2. You can then log in to the LXC container b1 and try to ping b2:
-```
-$ sudo lxc-console -n b1
-```
-
-3. Inside b1, run:
-```
-# ping 172.31.2.2
-```
 
 ### rftest2
 
@@ -130,7 +137,7 @@ host from inside the VM.
 
 1. Run:
 ```
-$ sudo ./rftest2
+$ sudo ./rftest2_ryu
 ```
 
 2. Once you have a Mininet VM up and running, copy the network topology files 
@@ -142,7 +149,7 @@ $ scp ipconf mininet@[guest address]:/home/mininet
 
 3. Then start the network:
 ```
-$ sudo mn --custom mininet/custom/topo-4sw-4host.py --topo=rftest2 --controller=remote,ip=[host address],port=6633 --pre=ipconf
+$ sudo mn --switch user --custom mininet/custom/topo-4sw-4host.py --topo=rftest2 --controller=remote,ip=[host address],port=6633 --pre=ipconf
 ```
 
 Wait for the network to converge (it should take a few seconds), and try to 
