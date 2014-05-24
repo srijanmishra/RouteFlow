@@ -353,6 +353,8 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
                 rm.add_match(Match.ETHERTYPE(RF_ETH_PROTO))
             rm.add_action(Action.CONTROLLER())
 
+        rm.set_instructions(None)
+        rm.add_instructions(Instruction.APPLY_ACTIONS())
         rm.add_option(Option.CT_ID(ct_id))
         self.ipc.send(RFSERVER_RFPROXY_CHANNEL, str(ct_id), rm)
 

@@ -186,14 +186,17 @@ class RFProxy(app_manager.RyuApp):
                 msg = DatapathPortRegister(ct_id=self.ID, dp_id=dpid,
                                            dp_port=port.port_no)
                 self.ipc.send(RFSERVER_RFPROXY_CHANNEL, RFSERVER_ID, msg)
-                log.info("Registering datapath port (dp_id=%s, dp_port=%d)",
+                log.info("INFO:rfproxy:Registering datapath port (dp_id=%s, dp_port=%d)",
                          dpid_to_str(dpid), port.port_no)
+
+
+
 
     @set_ev_cls(event.EventSwitchLeave, MAIN_DISPATCHER)
     def handler_datapath_leave(self, ev):
         dp = ev.switch.dp
         dpid = dp.id
-        log.info("Datapath is down (dp_id=%d)", dpid)
+        log.info("INFO:rfproxy:Datapath is down (dp_id=%d)", dpid)
         self.table.delete_dp(dpid)
         msg = DatapathDown(ct_id=self.ID, dp_id=dpid)
         self.ipc.send(RFSERVER_RFPROXY_CHANNEL, RFSERVER_ID, msg)
@@ -230,16 +233,13 @@ class RFProxy(app_manager.RyuApp):
         msg = ev.msg
         dp = msg.datapath
         dpid = dp.id
-        dst, src, ethertype = ethernet.parser(msg.data)
-
-        for f in msg.match.fields:
-            if f.header == dp.ofproto.OXM_OF_IN_PORT:
-                in_port = f.value
+        pkt, ethertype, buff = ethernet.parser(msg.data)
+        in_port = msg.match['in_port']
 
         # If we have a mapping packet, inform RFServer through a Map message
-        if ethertype == RF_ETH_PROTO:
+        if pkt.ethertype == RF_ETH_PROTO:
             vm_id, vm_port = struct.unpack("QB", msg.data[14:23])
-            log.info("Received mapping packet (vm_id=%s, vm_port=%d, "
+            log.info("INFO:rfproxy:Received mapping packet (vm_id=%s, vm_port=%d, "
                      "vs_id=%s, vs_port=%d)", format_id(vm_id), vm_port,
                      dpid_to_str(dpid), in_port)
             msg = VirtualPlaneMap(vm_id=vm_id, vm_port=vm_port, vs_id=dpid,
@@ -255,13 +255,13 @@ class RFProxy(app_manager.RyuApp):
                 switch = self.switches._get_switch(dp_id)
                 if switch is not None:
                     send_pkt_out(switch.dp, dp_port, msg.data)
-                    log.debug("forwarding packet from rfvs (dp_id: %s, "
+                    log.debug("INFO:rfproxy:forwarding packet from rfvs (dp_id: %s, "
                              "dp_port: %d)", dpid_to_str(dp_id), dp_port)
                 else:
-                    log.warn("dropped packet from rfvs (dp_id: %s, "
+                    log.warn("INFO:rfproxy:dropped packet from rfvs (dp_id: %s, "
                              "dp_port: %d)", dpid_to_str(dp_id), dp_port)
             else:
-                log.info("Unmapped RFVS port (vs_id=%s, vs_port=%d)",
+                log.debug("INFO:rfproxy:Unmapped RFVS port (vs_id=%s, vs_port=%d)",
                          dpid_to_str(dpid), in_port)
         # If the packet came from a switch, redirect it to the right RFVS port
         else:
@@ -271,13 +271,13 @@ class RFProxy(app_manager.RyuApp):
                 switch = self.switches._get_switch(vs_id)
                 if switch is not None:
                     send_pkt_out(switch.dp, vs_port, msg.data)
-                    log.debug("forwarding packet to rfvs (vs_id: %s, "
+                    log.debug("INFO:rfproxy:forwarding packet to rfvs (vs_id: %s, "
                               "vs_port: %d)", dpid_to_str(vs_id), vs_port)
                 else:
-                    log.warn("dropped packet to rfvs (vs_id: %s, "
+                    log.warn("INFO:rfproxy:dropped packet to rfvs (vs_id: %s, "
                              "vs_port: %d)", dpid_to_str(dp_id), dp_port)
             else:
-                log.info("Unmapped datapath port (dp_id=%s, dp_port=%d)",
+                log.debug("Unmapped datapath port (dp_id=%s, dp_port=%d)",
                          dpid_to_str(dpid), in_port)
 
 
