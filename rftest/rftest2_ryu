@@ -24,8 +24,8 @@ LXCDIR=/var/lib/lxc
 MONGODB_CONF=/etc/mongodb.conf
 MONGODB_PORT=27017
 MONGODB_ADDR=192.168.10.1
-CONTROLLER_PORT1=6633
-CONTROLLER_PORT2=6634
+CONTROLLER_PORT=6653
+
 RF_HOME=..
 export PATH=$PATH:/usr/local/bin:/usr/local/sbin
 export PYTHONPATH=$PYTHONPATH:$RF_HOME
@@ -58,6 +58,10 @@ kill_process_tree() {
     if [ $top -eq 0 ]; then
         kill -9 $pid &> /dev/null
     fi
+
+    pkill -f "ofdatapath"
+    pkill -f "ofprotocol"
+
 }
 
 reset() {
@@ -161,10 +165,7 @@ echo_bold "-> Starting RFMonitor..."
 ./rfserver/rfmonitor.py &
 
 echo_bold "-> Starting the controller and RFPRoxy..."
-ryu-manager ryu-rfproxy/rfproxy.py --observe-links --install-lldp-flow --ofp-role equal --ofp-tcp-listen-port $CONTROLLER_PORT1 &
-wait_port_listen $CONTROLLER_PORT1
-#ryu-manager ryu-rfproxy/rfproxy.py --observe-links --install-lldp-flow --ofp-role equal --ofp-tcp-listen-port $CONTROLLER_PORT2 &
-#wait_port_listen $CONTROLLER_PORT2
+ryu-manager ryu-rfproxy/rfproxy.py --observe-links --install-lldp-flow --ofp-tcp-listen-port $CONTROLLER_PORT &
 
 echo_bold "-> Starting RFServer..."
 ./rfserver/rfserver.py rftest/rftest2config.csv &
@@ -173,7 +174,7 @@ echo_bold "-> Starting the control plane network (dp0 VS)..."
 
 ofdatapath --no-slicing punix:/var/run/s7266.sock --datapath-id=726676737266 --interfaces=rfvmA.1,rfvmA.2,rfvmA.3,rfvmA.4,rfvmB.1,rfvmB.2,rfvmB.3,rfvmC.1,rfvmC.2,rfvmC.3,rfvmD.1,rfvmD.2,rfvmD.3,rfvmD.4 1> /tmp/s7266-ofd.log 2>/tmp/s7266-ofd.log &
 
-ofprotocol unix:/var/run/s7266.sock tcp:localhost:6633,tcp:localhost:6634 1> /tmp/s7266-ofp.log 2>/tmp/s7266-ofp.log &
+ofprotocol unix:/var/run/s7266.sock tcp:localhost:$CONTROLLER_PORT 1> /tmp/s7266-ofp.log 2>/tmp/s7266-ofp.log &
 
 echo_bold "---"
 echo_bold "This test is up and running."

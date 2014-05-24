@@ -55,7 +55,10 @@ for RouteFlow.
 sudo apt-get install build-essential git libboost-dev \
   libboost-program-options-dev libboost-thread-dev \
   libboost-filesystem-dev iproute-dev openvswitch-switch \
-  mongodb python-pymongo
+  mongodb python-pymongo python-pip
+```
+```
+sudo pip install networkx
 ```
 
 2. Clone RouteFlow's repository on GitHub:
@@ -74,6 +77,8 @@ cd ryu
 sudo apt-get install python-dev python-eventlet python-routes \
     python-webob python-paramiko python-netaddr \
     python-lxml python-pip
+
+sudo python ./setup.py build
 
 sudo python ./setup.py install 
 ```

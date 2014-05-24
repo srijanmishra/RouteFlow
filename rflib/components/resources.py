@@ -3,7 +3,18 @@ import logging
 import threading
 
 from rflib.defs import *
-from rflib.components.messages import *
+from rflib.components.modifiers import *
+
+def net_addr(ip, mask):
+    net_addr_bin = []
+    ip_split = ip.split('.')
+    mask_split = mask.split('.')
+    if len(ip_split) == len(mask_split):
+        for i in range(len(ip_split)):
+            net_addr_bin.append( str( int(ip_split[i]).__and__(int(mask_split[i])) ) )
+    net_addr = '.'.join(net_addr_bin)
+    return net_addr
+
 
 class Port(object):
     def __init__(self, id, port_no):
@@ -737,7 +748,7 @@ class Topologies():
     def register_topology(self, topo_id, topo_type, ct_id=None):
         if topo_type == "physical":
             if topo_id not in self.physical_topologies.keys(): 
-                topo_phy = TopoFisica(topo_id, ct_id)
+                topo_phy = TopoPhysical(topo_id, ct_id)
                 self.physical_topologies[topo_id] = topo_phy
             
         if topo_type == "virtual":
@@ -762,7 +773,6 @@ class Topologies():
     
     def modify_virtual_topology(self, topo_virt, msg):
         msg_type =  msg.get_type()
-        #log.info("modify_virt_topology\n%s", msg)
         if msg_type == INTERFACE_REGISTER:
             topo_virt.register_vm(msg.get_vm_id(), msg.to_dict())
         if msg_type == VIRTUAL_PLANE_MAP:
@@ -775,7 +785,6 @@ class Topologies():
 
     def modify_physical_topology(self, topo_phy, msg):
         msg_type =  msg.get_type()
-        log.info("modify_phy_topology\n%s", msg)
         if msg_type == DATAPATH_PORT_REGISTER:
             topo_phy.register_dp(msg.get_dp_id(), msg.get_dp_port())
         if msg_type == DATAPATH_DOWN:
@@ -784,11 +793,9 @@ class Topologies():
             if msg.get_is_removal():
                 topo_phy.unregister_link(msg.get_dp_src_id(), msg.get_dp_src_port(),
                                          msg.get_dp_dst_id(), msg.get_dp_dst_port())
-                #log.info("Link unregister %s", msg)
             else:
                 topo_phy.register_link(msg.get_dp_src_id(), msg.get_dp_src_port(),
                                        msg.get_dp_dst_id(), msg.get_dp_dst_port())
-                #log.info("Link register %s", msg)
         if msg_type == DATA_PLANE_MAP:
             topo_phy.register_map_data_plane(msg.get_vs_id(), msg.get_vs_port(),
                                              msg.get_dp_id(), msg.get_dp_port())            
@@ -810,15 +817,12 @@ class Topologies():
         map_data_plane = physical_topo.get_map_data_plane()
         for (vsid,vsport) in map_virtual_plane.keys():
             if (vsid,vsport) not in map_data_plane.keys():
-                log.info("Virtual data planes mapping not checked")
                 return False
-        log.info("Virtual data planes mapping checked")
         return True
 
     #Checks if virtual and physical are ready for mapping
     #I.e., if all topoVirtual routes will be adequated to the topoPhysical accordingly to the mapping between them
     def check_topologies(self, topo_virt, topo_phy):
-        log.info("Checking topologies")
         map_virtual_data_planes_topo_virt = topo_virt.get_map_data_virtual_planes()
         map_virtual_data_planes_topo_phy = topo_phy.get_map_virtual_data_planes()
         vms_queue = []
@@ -863,9 +867,7 @@ class Topologies():
                             if (pair.id, pair.port) in dpids_connected:
                                 vmid_conectivity = True
                 if not vmid_conectivity:
-                    log.info("Topologies checking failed")
                     return False
-        log.info("Topologies checking done")
         topo_phy.buildTopoPhysical()
         return True    
     

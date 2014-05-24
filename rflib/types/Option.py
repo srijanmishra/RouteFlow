@@ -4,6 +4,7 @@ from bson.binary import Binary
 RFOT_PRIORITY = 1     # Route priority
 RFOT_IDLE_TIMEOUT = 2 # Drop route after specified idle time
 RFOT_HARD_TIMEOUT = 3 # Drop route after specified time has passed
+RFOT_TABLE = 4        # Table id
 # MSB = 1; Indicates optional feature.
 RFOT_CT_ID = 255      # Specify destination controller
 
@@ -11,7 +12,8 @@ typeStrings = {
             RFOT_PRIORITY : "RFOT_PRIORITY",
             RFOT_IDLE_TIMEOUT : "RFOT_IDLE_TIMEOUT",
             RFOT_HARD_TIMEOUT : "RFOT_HARD_TIMEOUT",
-            RFOT_CT_ID : "RFOT_CT_ID"
+            RFOT_CT_ID : "RFOT_CT_ID",
+            RFOT_TABLE : "RFOT_TABLE"
         }
 
 class Option(TLV):

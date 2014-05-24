@@ -17,7 +17,7 @@ RFMONITOR_ID = "rfmonitor"
 DEFAULT_RFCLIENT_INTERFACE = "eth0"
 
 RFVS_PREFIX = 0x72667673
-is_rfvs = lambda dp_id: not ((dp_id >> 32) ^ RFVS_PREFIX)
+is_rfvs = lambda dp_id: not ((dp_id >> 16) ^ RFVS_PREFIX)
 
 RF_ETH_PROTO = 0x0A0A # RF ethernet protocol
 
@@ -47,6 +47,7 @@ DC_ALL = 255			# Send all traffic to the controller
 RMT_ADD = 0			# Add flow to datapath
 RMT_DELETE = 1			# Remove flow from datapath
 #RMT_MODIFY = 2		# Modify existing flow (Unimplemented)
+
 
 PC_MAP = 0
 PC_RESET = 1

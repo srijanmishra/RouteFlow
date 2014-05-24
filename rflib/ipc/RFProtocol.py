@@ -552,13 +552,14 @@ class DataPlaneMap(MongoIPCMessage):
         s += "  vs_port: " + str(self.get_vs_port()) + "\n"
         return s
 
-
 class RouteMod(MongoIPCMessage):
-    def __init__(self, mod=None, id=None, matches=None, actions=None, options=None):
+    def __init__(self, mod=None, id=None, matches=None, 
+                 actions=None, instructions=None, options=None):
         self.set_mod(mod)
         self.set_id(id)
         self.set_matches(matches)
         self.set_actions(actions)
+        self.set_instructions(instructions)
         self.set_options(options)
 
     def get_type(self):
@@ -610,6 +611,19 @@ class RouteMod(MongoIPCMessage):
     def add_action(self, action):
         self.actions.append(action.to_dict())
 
+    def get_instructions(self):
+        return self.instructions
+
+    def set_instructions(self, instructions):
+        instructions = list() if instructions is None else instructions
+        try:
+            self.instructions = list(instructions)
+        except:
+            self.instructions = list()
+
+    def add_instructions(self, instruction):
+        self.instructions.append(instruction.to_dict())
+
     def get_options(self):
         return self.options
 
@@ -628,6 +642,7 @@ class RouteMod(MongoIPCMessage):
         self.set_id(data["id"])
         self.set_matches(data["matches"])
         self.set_actions(data["actions"])
+        self.set_instructions(data["instructions"])
         self.set_options(data["options"])
 
     def to_dict(self):
@@ -636,6 +651,7 @@ class RouteMod(MongoIPCMessage):
         data["id"] = str(self.get_id())
         data["matches"] = self.get_matches()
         data["actions"] = self.get_actions()
+        data["instructions"] = self.get_instructions()
         data["options"] = self.get_options()
         return data
 
@@ -656,6 +672,9 @@ class RouteMod(MongoIPCMessage):
         s += "  actions:\n"
         for action in self.get_actions():
             s += "    " + str(Action.from_dict(action)) + "\n"
+        s += "  instructions:\n"
+        for instruction in self.get_instructions():
+            s += "    " + str(Instruction.from_dict(instruction)) + "\n"
         s += "  options:\n"
         for option in self.get_options():
             s += "    " + str(Option.from_dict(option)) + "\n"
@@ -724,7 +743,7 @@ class MeterMod(MongoIPCMessage):
         if meter_band_type in self.meter_bands.keys():
             self.meter_bands[meter_band_type].append(meter_band_attrib.to_dict())
         else:
-            self.add_meter_band(meter_band_type):
+            self.add_meter_band(meter_band_type)
             self.meter_bands[meter_band_type].append(meter_band_attrib.to_dict())
 
     def from_dict(self, data):

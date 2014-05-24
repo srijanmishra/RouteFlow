@@ -5,7 +5,7 @@ import logging
 from ofinterface import *
 
 import rflib.ipc.IPC as IPC
-import rflib.ipc.IPCService as IPCService
+import rflib.ipc.MongoIPC as MongoIPC
 from rflib.ipc.RFProtocol import *
 from rflib.ipc.RFProtocolFactory import RFProtocolFactory
 from rflib.defs import *
@@ -14,11 +14,10 @@ from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import *
 from ryu.topology import switches, event
-from ryu.ofproto import ofproto_v1_2 as ofproto
+from ryu.ofproto import ofproto_v1_3 as ofproto
 from ryu.lib import hub
 from ryu.lib.mac import *
 from ryu.lib.dpid import *
-from ryu.lib import hub
 from ryu.lib.packet.ethernet import ethernet
 
 log = logging.getLogger('ryu.app.rfproxy')
@@ -68,12 +67,10 @@ class Table:
     # to the wrong places. We have to fix this.
 
 
-class HubThreading(object):
-    Thread = staticmethod(threading.Thread)
-    Event = staticmethod(hub.Event)
-    sleep = staticmethod(hub.sleep)
-    name = "HubThreading"
-
+def hub_thread_wrapper(target, args=()):
+    result = hub.spawn(target, *args)
+    result.start = lambda: target
+    return result
 
 # IPC message Processing
 class RFProcessor(IPC.IPCMessageProcessor):
@@ -167,8 +164,12 @@ class RFProxy(app_manager.RyuApp):
         self.table = Table()
         self.switches = kwargs['switches']
         self.rfprocess = RFProcessor(self.switches, self.table)
+        
+        self.ipc = MongoIPC.MongoIPCMessageService(MONGO_ADDRESS,
+                                                   MONGO_DB_NAME, str(self.ID),
+                                                   hub_thread_wrapper,
+                                                   hub.sleep)
 
-        self.ipc = IPCService.for_proxy(str(self.ID), HubThreading)
         self.ipc.listen(RFSERVER_RFPROXY_CHANNEL, RFProtocolFactory(),
                         self.rfprocess, False)
         log.info("RFProxy running.")
@@ -229,14 +230,14 @@ class RFProxy(app_manager.RyuApp):
         msg = ev.msg
         dp = msg.datapath
         dpid = dp.id
-        pkt, _ = ethernet.parser(msg.data)
+        dst, src, ethertype = ethernet.parser(msg.data)
 
         for f in msg.match.fields:
             if f.header == dp.ofproto.OXM_OF_IN_PORT:
                 in_port = f.value
 
         # If we have a mapping packet, inform RFServer through a Map message
-        if pkt.ethertype == RF_ETH_PROTO:
+        if ethertype == RF_ETH_PROTO:
             vm_id, vm_port = struct.unpack("QB", msg.data[14:23])
             log.info("Received mapping packet (vm_id=%s, vm_port=%d, "
                      "vs_id=%s, vs_port=%d)", format_id(vm_id), vm_port,

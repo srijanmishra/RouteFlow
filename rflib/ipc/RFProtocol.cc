@@ -537,14 +537,16 @@ RouteMod::RouteMod() {
     set_matches(std::vector<Match>());
     set_actions(std::vector<Action>());
     set_options(std::vector<Option>());
+    set_instructions(std::vector<Instruction>());
 }
 
-RouteMod::RouteMod(uint8_t mod, uint64_t id, std::vector<Match> matches, std::vector<Action> actions, std::vector<Option> options) {
+RouteMod::RouteMod(uint8_t mod, uint64_t id, std::vector<Match> matches, std::vector<Action> actions, std::vector<Option> options,std::vector<Instruction> instructions) {
     set_mod(mod);
     set_id(id);
     set_matches(matches);
     set_actions(actions);
     set_options(options);
+    set_instructions(instructions);
 }
 
 int RouteMod::get_type() {
@@ -591,6 +593,18 @@ void RouteMod::add_action(const Action& action) {
     this->actions.push_back(action);
 }
 
+std::vector<Instruction> RouteMod::get_instructions() {
+    return this->instructions;
+}
+
+void RouteMod::set_instructions(std::vector<Instruction> instructions) {
+    this->instructions = instructions;
+}
+
+void RouteMod::add_instruction(const Instruction& instruction) {
+    this->instructions.push_back(instruction);
+}
+
 std::vector<Option> RouteMod::get_options() {
     return this->options;
 }
@@ -609,6 +623,7 @@ void RouteMod::from_BSON(const char* data) {
     set_id(string_to<uint64_t>(obj["id"].String()));
     set_matches(MatchList::to_vector(obj["matches"].Array()));
     set_actions(ActionList::to_vector(obj["actions"].Array()));
+    set_instructions(InstructionList::to_vector(obj["instructions"].Array()));
     set_options(OptionList::to_vector(obj["options"].Array()));
 }
 
@@ -618,6 +633,7 @@ const char* RouteMod::to_BSON() {
     _b.append("id", to_string<uint64_t>(get_id()));
     _b.appendArray("matches", MatchList::to_BSON(get_matches()));
     _b.appendArray("actions", ActionList::to_BSON(get_actions()));
+    _b.appendArray("instructions", InstructionList::to_BSON(get_instructions()));
     _b.appendArray("options", OptionList::to_BSON(get_options()));
     mongo::BSONObj o = _b.obj();
     char* data = new char[o.objsize()];
@@ -632,6 +648,7 @@ string RouteMod::str() {
     ss << "  id: " << to_string<uint64_t>(get_id()) << endl;
     ss << "  matches: " << MatchList::to_BSON(get_matches()) << endl;
     ss << "  actions: " << ActionList::to_BSON(get_actions()) << endl;
+    ss << "  instructions: " << InstructionList::to_BSON(get_instructions()) << endl;
     ss << "  options: " << OptionList::to_BSON(get_options()) << endl;
     return ss.str();
 }

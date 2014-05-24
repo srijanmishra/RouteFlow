@@ -7,6 +7,7 @@
 #include "IPAddress.h"
 #include "MACAddress.h"
 #include "converter.h"
+#include "Instruction.hh"
 #include "Action.hh"
 #include "Match.hh"
 #include "Option.hh"
@@ -222,10 +223,11 @@ class DataPlaneMap : public IPCMessage {
         uint32_t vs_port;
 };
 
+
 class RouteMod : public IPCMessage {
     public:
         RouteMod();
-        RouteMod(uint8_t mod, uint64_t id, std::vector<Match> matches, std::vector<Action> actions, std::vector<Option> options);
+        RouteMod(uint8_t mod, uint64_t id, std::vector<Match> matches, std::vector<Action> actions, std::vector<Option> options,std::vector<Instruction> instructions);
 
         uint8_t get_mod();
         void set_mod(uint8_t mod);
@@ -245,6 +247,10 @@ class RouteMod : public IPCMessage {
         void set_options(std::vector<Option> options);
         void add_option(const Option& option);
 
+        std::vector<Instruction> get_instructions();
+        void set_instructions(std::vector<Instruction> instructions);
+        void add_instruction(const Instruction& instruction);
+
         virtual int get_type();
         virtual void from_BSON(const char* data);
         virtual const char* to_BSON();
@@ -256,6 +262,7 @@ class RouteMod : public IPCMessage {
         std::vector<Match> matches;
         std::vector<Action> actions;
         std::vector<Option> options;
+        std::vector<Instruction> instructions;
 };
 
 class ControllerRegister : public IPCMessage {

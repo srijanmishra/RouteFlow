@@ -16,6 +16,7 @@ from rflib.ipc.RFProtocol import *
 from rflib.ipc.RFProtocolFactory import RFProtocolFactory
 from rflib.defs import *
 from rflib.types.Match import *
+from rflib.types.Instruction import *
 from rflib.types.Action import *
 from rflib.types.Option import *
 from rflib.components.resources import *
@@ -33,6 +34,7 @@ DEFAULT_CT_ID = 0
 
 class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
     def __init__(self, configfile, islconffile):
+        self.dps_registered = []
         self.rftable = RFTable()
         self.isltable = RFISLTable()
         self.config = RFConfig(configfile)
@@ -155,6 +157,8 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
 
                 # Replace the VM id,port with the Datapath id.port
                 rm.set_id(int(entry.dp_id))
+                rm.set_instructions(None)
+                rm.add_instructions(Instruction.APPLY_ACTIONS())
 
                 if rm.get_mod() is RMT_DELETE:
                     # When deleting a route, we don't need an output action.
@@ -353,12 +357,15 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
         self.ipc.send(RFSERVER_RFPROXY_CHANNEL, str(ct_id), rm)
 
     def config_dp(self, ct_id, dp_id):
-        if is_rfvs(dp_id):
+        if is_rfvs(dp_id) and dp_id not in self.dps_registered:
             # TODO: support more than one OVS
+            self.dps_registered.append(dp_id)
             self.send_datapath_config_message(ct_id, dp_id, DC_ALL)
             self.log.info("Configuring RFVS (dp_id=%s)" % format_id(dp_id))
         elif self.rftable.is_dp_registered(ct_id, dp_id) or \
-             self.isltable.is_dp_registered(ct_id, dp_id):
+             self.isltable.is_dp_registered(ct_id, dp_id) and \
+             dp_id not in self.dps_registered:
+            self.dps_registered.append(dp_id)
             # Configure a normal switch. Clear the tables and install default
             # flows.
             self.send_datapath_config_message(ct_id, dp_id,
@@ -388,6 +395,8 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
         for entry in self.isltable.get_entries(rem_ct=ct_id, rem_id=dp_id):
             entry.make_idle(RFISL_IDLE_DP_PORT)
             self.isltable.set_entry(entry)
+        if dp_id in self.dps_registered:
+            self.dps_registered.remove(dp_id)
         self.log.info("Datapath down (dp_id=%s)" % format_id(dp_id))
 
     def set_dp_port_down(self, ct_id, dp_id, dp_port):

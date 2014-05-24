@@ -23,9 +23,9 @@ def create_default_flow_mod(dp, cookie=0, cookie_mask=0, table_id=0,
     parser = dp.ofproto_parser
     ofproto = dp.ofproto
     
-    if command == RMC_ADD:
+    if command == RMT_ADD:
         command = ofproto.OFPFC_ADD
-    elif command == RMC_DELETE:
+    elif command == RMT_DELETE:
         command = ofproto.OFPFC_DELETE_STRICT
     
     if inst is []:
@@ -59,9 +59,9 @@ def create_default_group_mod(dp, group_id, group_command, group_type):
     watch_group = 0
     dst_port= 0
     buckets = []
-    if group_command == RMC_ADD:
+    if group_command == RMT_ADD:
         command = dp.ofproto.OFPGC_ADD
-    elif group_command == RMC_DELETE:
+    elif group_command == RMT_DELETE:
         command = dp.ofproto.OFPGC_DELETE
     actions = [dp.ofproto_parser.OFPActionOutput(dst_port, dp.ofproto.OFPCML_NO_BUFFER)]
     buckets = [dp.ofproto_parser.OFPBucket(weight, watch_port, watch_group, actions)]
@@ -70,9 +70,9 @@ def create_default_group_mod(dp, group_id, group_command, group_type):
 
 
 def create_default_meter_mod(dp, meter_id, meter_command, meter_flags):
-    if meter_command == RMC_ADD:
+    if meter_command == RMT_ADD:
         command = dp.ofproto.OFPMC_ADD
-    elif meter_command == RMC_DELETE:
+    elif meter_command == RMT_DELETE:
         command = dp.ofproto.OFPMC_DELETE
     bands = [dp.ofproto_parser.OFPMeterBandDrop(0, 0)]
     meter_mod = dp.ofproto_parser.OFPMeterMod(dp, command, meter_flags, meter_id, bands)
