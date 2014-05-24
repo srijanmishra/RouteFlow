@@ -757,7 +757,7 @@ class OFPMatch(StringifyMixin):
         self.type = ofproto.OFPMT_OXM
         self.length = length
 
-        if not _ordered_fields is None:
+        if _ordered_fields is not None:
             assert not kwargs
             self._fields2 = _ordered_fields
         else:
@@ -3346,7 +3346,8 @@ class OFPPortMod(MsgBase):
         ]
     }
 
-    def __init__(self, datapath, port_no, hw_addr, config, mask, advertise):
+    def __init__(self, datapath, port_no=0, hw_addr='00:00:00:00:00:00',
+                 config=0, mask=0, advertise=0):
         super(OFPPortMod, self).__init__(datapath)
         self.port_no = port_no
         self.hw_addr = hw_addr

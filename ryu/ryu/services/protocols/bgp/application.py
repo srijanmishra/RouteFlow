@@ -58,7 +58,7 @@ CONF.register_opts([
     cfg.StrOpt('bind-ip', default='0.0.0.0', help='rpc-bind-ip'),
     cfg.StrOpt('bgp-config-file', default=DEFAULT_CONFIG_PATH,
                help='bgp-config-file')
-    ])
+])
 
 
 @add_bgp_error_metadata(code=BIN_ERROR,
@@ -102,7 +102,7 @@ class BGPSpeaker(RyuApp):
 
         super(BGPSpeaker, self).start()
 
-        t.wait()
+        return t
 
     @classmethod
     def validate_rpc_ip(cls, ip):

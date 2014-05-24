@@ -21,6 +21,7 @@ using namespace std;
 
 #define FULL_IPV4_PREFIX 32
 #define FULL_IPV6_PREFIX 128
+#define MAX_RENTRIES_MULTIPATH 128
 
 #define EMPTY_MAC_ADDRESS "00:00:00:00:00:00"
 

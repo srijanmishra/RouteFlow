@@ -716,7 +716,11 @@ class IPAddrPrefix(_UnlabelledAddrPrefix, _IPAddrPrefix):
 
     @property
     def prefix(self):
-        return self.addr
+        return self.addr + '/{0}'.format(self.length)
+
+    @property
+    def formatted_nlri_str(self):
+        return self.prefix
 
 
 class IP6AddrPrefix(_UnlabelledAddrPrefix, _IP6AddrPrefix):
@@ -724,17 +728,53 @@ class IP6AddrPrefix(_UnlabelledAddrPrefix, _IP6AddrPrefix):
 
     @property
     def prefix(self):
-        return self.addr
+        return self.addr + '/{0}'.format(self.length)
+
+    @property
+    def formatted_nlri_str(self):
+        return self.prefix
 
 
 class LabelledVPNIPAddrPrefix(_LabelledAddrPrefix, _VPNAddrPrefix,
                               _IPAddrPrefix):
     ROUTE_FAMILY = RF_IPv4_VPN
 
+    @property
+    def prefix(self):
+        return self.addr[-1] + '/{0}'.format(self.length)
+
+    @property
+    def route_disc(self):
+        return self.addr[-2]
+
+    @property
+    def label_list(self):
+        return self.addr[:-2]
+
+    @property
+    def formatted_nlri_str(self):
+        return "%s:%s" % (self.route_disc, self.prefix)
+
 
 class LabelledVPNIP6AddrPrefix(_LabelledAddrPrefix, _VPNAddrPrefix,
                                _IP6AddrPrefix):
     ROUTE_FAMILY = RF_IPv6_VPN
+
+    @property
+    def prefix(self):
+        return self.addr[-1] + '/{0}'.format(self.length)
+
+    @property
+    def route_disc(self):
+        return self.addr[-2]
+
+    @property
+    def label_list(self):
+        return self.addr[:-2]
+
+    @property
+    def formatted_nlri_str(self):
+        return "%s:%s" % (self.route_disc, self.prefix)
 
 
 class RouteTargetMembershipNLRI(StringifyMixin):
@@ -750,22 +790,59 @@ class RouteTargetMembershipNLRI(StringifyMixin):
 
     def __init__(self, origin_as, route_target):
         # If given is not default_as and default_rt
-        if not (origin_as is RtNlri.DEFAULT_AS and
-                route_target is RtNlri.DEFAULT_RT):
+        if not (origin_as is self.DEFAULT_AS and
+                route_target is self.DEFAULT_RT):
             # We validate them
-            if (not is_valid_old_asn(origin_as) or
-                    not is_valid_ext_comm_attr(route_target)):
+            if (not self._is_valid_old_asn(origin_as) or
+                    not self._is_valid_ext_comm_attr(route_target)):
                 raise ValueError('Invalid params.')
         self.origin_as = origin_as
         self.route_target = route_target
+
+    def _is_valid_old_asn(self, asn):
+        """Returns true if given asn is a 16 bit number.
+
+        Old AS numbers are 16 but unsigned number.
+        """
+        valid = True
+        # AS number should be a 16 bit number
+        if (not isinstance(asn, (int, long)) or (asn < 0) or
+                (asn > ((2 ** 16) - 1))):
+            valid = False
+
+        return valid
+
+    def _is_valid_ext_comm_attr(self, attr):
+        """Validates *attr* as string representation of RT or SOO.
+
+        Returns True if *attr* is as per our convention of RT or SOO, else
+        False. Our convention is to represent RT/SOO is a string with format:
+        *global_admin_part:local_admin_path*
+        """
+        is_valid = True
+
+        if not isinstance(attr, str):
+            is_valid = False
+        else:
+            first, second = attr.split(':')
+            try:
+                if '.' in first:
+                    socket.inet_aton(first)
+                else:
+                    int(first)
+                    int(second)
+            except (ValueError, socket.error):
+                is_valid = False
+
+        return is_valid
 
     @property
     def formatted_nlri_str(self):
         return "%s:%s" % (self.origin_as, self.route_target)
 
     def is_default_rtnlri(self):
-        if (self._origin_as is RtNlri.DEFAULT_AS and
-                self._route_target is RtNlri.DEFAULT_RT):
+        if (self._origin_as is self.DEFAULT_AS and
+                self._route_target is self.DEFAULT_RT):
             return True
         return False
 
@@ -1225,6 +1302,8 @@ class _BGPPathAttributeAsPathCommon(_PathAttribute):
                 type_ = self._AS_SEQUENCE
             l = list(e)
             num_as = len(l)
+            if num_as == 0:
+                continue
             msg_pack_into(self._SEG_HDR_PACK_STR, buf, offset, type_, num_as)
             offset += struct.calcsize(self._SEG_HDR_PACK_STR)
             for i in l:
@@ -2100,30 +2179,27 @@ class BGPRouteRefresh(BGPMessage):
     _MIN_LEN = BGPMessage._HDR_LEN + struct.calcsize(_PACK_STR)
 
     def __init__(self,
-                 afi, safi, reserved=0,
+                 afi, safi, demarcation=0,
                  type_=BGP_MSG_ROUTE_REFRESH, len_=None, marker=None):
         super(BGPRouteRefresh, self).__init__(marker=marker, len_=len_,
                                               type_=type_)
         self.afi = afi
         self.safi = safi
-        self.reserved = reserved
+        self.demarcation = demarcation
 
     @classmethod
     def parser(cls, buf):
-        (afi, reserved, safi,) = struct.unpack_from(cls._PACK_STR,
-                                                    buffer(buf))
+        (afi, demarcation, safi,) = struct.unpack_from(cls._PACK_STR,
+                                                       buffer(buf))
         return {
             "afi": afi,
-            "reserved": reserved,
             "safi": safi,
+            "demarcation": demarcation,
         }
 
     def serialize_tail(self):
-        # fixup
-        self.reserved = 0
-
         return bytearray(struct.pack(self._PACK_STR, self.afi,
-                                     self.reserved, self.safi))
+                                     self.demarcation, self.safi))
 
 
 class StreamParser(stream_parser.StreamParser):

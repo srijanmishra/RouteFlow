@@ -455,7 +455,7 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
 
         Update appropriate counters and set appropriate timers.
         """
-        assert rr_msg.TYPE_CODE == BGP_MSG_ROUTE_REFRESH
+        assert rr_msg.type == BGP_MSG_ROUTE_REFRESH
         self._protocol.send(rr_msg)
         LOG.debug('RouteRefresh %s>> %s' %
                   (self._neigh_conf.ip_address, rr_msg))
@@ -818,9 +818,6 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
                                              client_factory,
                                              time_out=tcp_conn_timeout,
                                              bind_address=bind_addr)
-                    bind_ip, bind_port = sock.getpeername()
-                    self._host_bind_ip = bind_ip
-                    self._host_bind_port = bind_port
                 except socket.error:
                     self.state.bgp_state = const.BGP_FSM_ACTIVE
                     LOG.debug('Socket could not be created in time (%s secs),'
@@ -986,8 +983,6 @@ class Peer(Source, Sink, NeighborConfListener, Activity):
 
         # non-MPBGP Update msg.
         if not (mp_reach_attr or mp_unreach_attr):
-            LOG.info('Received UPDATE msg. with no MpReachNlri or '
-                     'MpUnReachNlri attribute.')
             if not self.is_mpbgp_cap_valid(RF_IPv4_UC):
                 LOG.error('Got UPDATE message with un-available'
                           ' afi/safi %s' % RF_IPv4_UC)

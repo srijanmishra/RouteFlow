@@ -756,3 +756,96 @@ string ElectMaster::str() {
     ss << "  ct_port: " << to_string<uint32_t>(get_ct_port()) << endl;
     return ss.str();
 }
+
+DataPlaneLink::DataPlaneLink() {
+    set_dpsrc_id(0);
+    set_dpsrc_port(0);
+    set_dpdst_id(0);
+    set_dpdst_port(0);
+	set_is_removal(false);
+}
+
+DataPlaneLink::DataPlaneLink(uint64_t dpsrc_id, uint32_t dpsrc_port, uint64_t dpdst_id, uint32_t dpdst_port, bool is_removal) {
+    set_dpsrc_id(dpsrc_id);
+    set_dpsrc_port(dpsrc_port);
+    set_dpdst_id(dpdst_id);
+    set_dpdst_port(dpdst_port);
+	set_is_removal(is_removal);
+}
+
+int DataPlaneLink::get_type() {
+    return DATA_PLANE_LINK;
+}
+
+uint64_t DataPlaneLink::get_dpsrc_id() {
+    return this->dpsrc_id;
+}
+
+void DataPlaneLink::set_dpsrc_id(uint64_t dpsrc_id) {
+    this->dpsrc_id = dpsrc_id;
+}
+
+uint32_t DataPlaneLink::get_dpsrc_port() {
+    return this->dpsrc_port;
+}
+
+void DataPlaneLink::set_dpsrc_port(uint32_t dpsrc_port) {
+    this->dpsrc_port = dpsrc_port;
+}
+
+uint64_t DataPlaneLink::get_dpdst_id() {
+    return this->dpdst_id;
+}
+
+void DataPlaneLink::set_dpdst_id(uint64_t dpdst_id) {
+    this->dpdst_id = dpdst_id;
+}
+
+uint32_t DataPlaneLink::get_dpdst_port() {
+    return this->dpdst_port;
+}
+
+void DataPlaneLink::set_dpdst_port(uint32_t dpdst_port) {
+    this->dpdst_port = dpdst_port;
+}
+
+bool DataPlaneLink::get_is_removal() {
+    return this->is_removal;
+}
+
+void DataPlaneLink::set_is_removal(bool is_removal) {
+    this->is_removal = is_removal;
+}
+
+void DataPlaneLink::from_BSON(const char* data) {
+    mongo::BSONObj obj(data);
+    set_dpsrc_id(string_to<uint64_t>(obj["dpsrc_id"].String()));
+    set_dpsrc_port(string_to<uint32_t>(obj["dpsrc_port"].String()));
+    set_dpdst_id(string_to<uint64_t>(obj["dpdst_id"].String()));
+    set_dpdst_port(string_to<uint32_t>(obj["dpdst_port"].String()));
+    set_is_removal(string_to<bool>(obj["is_removal"].String()));
+}
+
+const char* DataPlaneLink::to_BSON() {
+    mongo::BSONObjBuilder _b;
+    _b.append("dpsrc_id", to_string<uint64_t>(get_dpsrc_id()));
+    _b.append("dpsrc_port", to_string<uint32_t>(get_dpsrc_port()));
+    _b.append("dpdst_id", to_string<uint64_t>(get_dpdst_id()));
+    _b.append("dpdst_port", to_string<uint32_t>(get_dpdst_port()));
+    _b.append("is_removal", to_string<bool>(get_is_removal()));
+    mongo::BSONObj o = _b.obj();
+    char* data = new char[o.objsize()];
+    memcpy(data, o.objdata(), o.objsize());
+    return data;
+}
+
+string DataPlaneLink::str() {
+    stringstream ss;
+    ss << "DataPlaneLink" << endl;
+    ss << "  dpsrc_id: " << to_string<uint64_t>(get_dpsrc_id()) << endl;
+    ss << "  dpsrc_port: " << to_string<uint32_t>(get_dpsrc_port()) << endl;
+    ss << "  dpdst_id: " << to_string<uint64_t>(get_dpdst_id()) << endl;
+    ss << "  dpdst_port: " << to_string<uint32_t>(get_dpdst_port()) << endl;
+    ss << "  is_removal: " << to_string<bool>(get_is_removal()) << endl;
+    return ss.str();
+}

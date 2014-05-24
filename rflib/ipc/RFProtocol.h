@@ -20,10 +20,10 @@ enum {
 	DATA_PLANE_MAP,
 	ROUTE_MOD,
 	CONTROLLER_REGISTER,
-	ELECT_MASTER
-    	DATA_PLANE_LINK,
-    	METER_MOD,
-    	GROUP_MOD,
+	ELECT_MASTER,
+	DATA_PLANE_LINK,
+	METER_MOD,
+	GROUP_MOD,
 	INTERFACE_REGISTER
 };
 
@@ -49,6 +49,43 @@ class PortRegister : public IPCMessage {
     private:
         uint64_t vm_id;
         uint32_t vm_port;
+        MACAddress hwaddress;
+};
+
+class InterfaceRegister : public IPCMessage {
+    public:
+        InterfaceRegister();
+        InterfaceRegister(string name, uint64_t vm_id, uint32_t vm_port, IPAddress address, IPAddress netmask, MACAddress hwaddress);
+
+        string get_name();
+        void set_name(string name);
+
+        uint64_t get_vm_id();
+        void set_vm_id(uint64_t vm_id);
+
+        uint32_t get_vm_port();
+        void set_vm_port(uint32_t vm_port);
+
+        IPAddress get_address();
+        void set_address(IPAddress address);
+
+        IPAddress get_netmask();
+        void set_netmask(IPAddress netmask);
+
+        MACAddress get_hwaddress();
+        void set_hwaddress(MACAddress hwaddress);
+
+        virtual int get_type();
+        virtual void from_BSON(const char* data);
+        virtual const char* to_BSON();
+        virtual string str();
+
+    private:
+        string name;
+        uint64_t vm_id;
+        uint32_t vm_port;
+        IPAddress address;
+        IPAddress netmask;
         MACAddress hwaddress;
 };
 
@@ -266,5 +303,40 @@ class ElectMaster : public IPCMessage {
         IPAddress ct_addr;
         uint32_t ct_port;
 };
+
+
+class DataPlaneLink : public IPCMessage {
+    public:
+        DataPlaneLink();
+        DataPlaneLink(uint64_t dpsrc_id, uint32_t dpsrc_port, uint64_t dpdst_id, uint32_t dpdst_port, bool is_removal);
+
+        uint64_t get_dpsrc_id();
+        void set_dpsrc_id(uint64_t dpsrc_id);
+
+        uint32_t get_dpsrc_port();
+        void set_dpsrc_port(uint32_t dpsrc_port);
+
+        uint64_t get_dpdst_id();
+        void set_dpdst_id(uint64_t dpdst_id);
+
+        uint32_t get_dpdst_port();
+        void set_dpdst_port(uint32_t dpdst_port);
+
+		bool get_is_removal();
+		void set_is_removal(bool is_removal);
+
+        virtual int get_type();
+        virtual void from_BSON(const char* data);
+        virtual const char* to_BSON();
+        virtual string str();
+
+    private:
+        uint64_t dpsrc_id;
+        uint32_t dpsrc_port;
+        uint64_t dpdst_id;
+        uint32_t dpdst_port;
+		bool is_removal;
+};
+
 
 #endif /* __RFPROTOCOL_H__ */

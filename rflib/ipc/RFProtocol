@@ -8,6 +8,14 @@ PortConfig
     i32 vm_port
     i32 operation_id
 
+InterfaceRegister
+	string name
+    i64 vm_id
+    i32 vm_port
+	ip address
+	ip netmask
+	mac hwaddress
+
 DatapathPortRegister
     i64 ct_id
     i64 dp_id
@@ -45,3 +53,10 @@ ControllerRegister
 ElectMaster
     ip ct_addr
     i32 ct_port
+
+DataPlaneLink
+    i64 dpsrc_id
+    i32 dpsrc_port
+    i64 dpdst_id
+    i32 dpdst_port
+	bool is_remove

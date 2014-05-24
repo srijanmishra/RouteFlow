@@ -282,10 +282,10 @@ def to_match(dp, attrs):
 
     if attrs.get('dl_type') == ether.ETH_TYPE_ARP or \
             attrs.get('eth_type') == ether.ETH_TYPE_ARP:
-        if 'nw_src' in attrs and not 'arp_spa' in attrs:
+        if 'nw_src' in attrs and 'arp_spa' not in attrs:
             attrs['arp_spa'] = attrs['nw_src']
             del attrs['nw_src']
-        if 'nw_dst' in attrs and not 'arp_tpa' in attrs:
+        if 'nw_dst' in attrs and 'arp_tpa' not in attrs:
             attrs['arp_tpa'] = attrs['nw_dst']
             del attrs['nw_dst']
 
@@ -500,6 +500,28 @@ def get_desc_stats(dp, waiters):
              'sw_desc': stats.sw_desc,
              'serial_num': stats.serial_num,
              'dp_desc': stats.dp_desc}
+    desc = {str(dp.id): s}
+    return desc
+
+
+def get_queue_stats(dp, waiters):
+    ofp = dp.ofproto
+    stats = dp.ofproto_parser.OFPQueueStatsRequest(dp, 0, ofp.OFPP_ANY,
+                                                   ofp.OFPQ_ALL)
+    msgs = []
+    send_stats_request(dp, stats, waiters, msgs)
+
+    s = []
+    for msg in msgs:
+        stats = msg.body
+        for stat in stats:
+            s.append({'duration_nsec': stat.duration_nsec,
+                      'duration_sec': stat.duration_sec,
+                      'port_no': stat.port_no,
+                      'queue_id': stat.queue_id,
+                      'tx_bytes': stat.tx_bytes,
+                      'tx_errors': stat.tx_errors,
+                      'tx_packets': stat.tx_packets})
     desc = {str(dp.id): s}
     return desc
 

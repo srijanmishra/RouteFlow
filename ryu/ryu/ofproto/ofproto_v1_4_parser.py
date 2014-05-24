@@ -643,7 +643,7 @@ class OFPMatch(StringifyMixin):
         self.type = ofproto.OFPMT_OXM
         self.length = length
 
-        if not _ordered_fields is None:
+        if _ordered_fields is not None:
             assert not kwargs
             self._fields2 = _ordered_fields
         else:
@@ -802,7 +802,7 @@ class OFPPropCommonExperimenter4ByteData(StringifyMixin):
         return cls(type_, length, experimenter, exp_type, data)
 
     def serialize(self):
-        #fixup
+        # fixup
         self.length = struct.calcsize(self._PACK_STR)
         self.length += len(self.data)
 
@@ -5541,13 +5541,14 @@ class OFPPortMod(MsgBase):
         ]
     }
 
-    def __init__(self, datapath, port_no, hw_addr, config, mask, properties):
+    def __init__(self, datapath, port_no=0, hw_addr='00:00:00:00:00:00',
+                 config=0, mask=0, properties=None):
         super(OFPPortMod, self).__init__(datapath)
         self.port_no = port_no
         self.hw_addr = hw_addr
         self.config = config
         self.mask = mask
-        self.properties = properties
+        self.properties = properties or []
 
     def _serialize_body(self):
         bin_props = bytearray()

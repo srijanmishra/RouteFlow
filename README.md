@@ -73,7 +73,7 @@ make rfclient
 cd ryu
 sudo apt-get install python-dev python-eventlet python-routes \
     python-webob python-paramiko python-netaddr \
-    python-lxml python-oslo-config python-msgpack
+    python-lxml python-pip
 
 sudo python ./setup.py install 
 ```
