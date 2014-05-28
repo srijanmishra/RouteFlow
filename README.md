@@ -43,13 +43,6 @@ for RouteFlow.
 
 # Building
 
-> If you just want to get started, follow these first steps. If you're 
-> developing or diving deeper, there are more advanced options, modules and 
-> newer versions of dependencies that can be installed through the `build.sh` 
-> script. See its 
-> [source](https://github.com/routeflow/RouteFlow/blob/master/build.sh) for 
-> more information.
-
 1. Install the dependencies (we strongly recommend Ubuntu 12.04):
 ```
 sudo apt-get install build-essential git libboost-dev \
@@ -63,7 +56,9 @@ sudo pip install networkx
 
 2. Clone RouteFlow's repository on GitHub:
 ```
-$ git clone git://github.com/routeflow/RouteFlow.git
+$ git clone https://github.com/raphaelvrosa/RouteFlow
+
+$ git checkout gsoc2014
 ```
 
 3. Build `rfclient`
@@ -100,7 +95,7 @@ $ scons install
 ```
 
 
-That's it! Now you can run tests 1 and 2. The setup to run them is described in 
+That's it! Now you can run test 2. The setup to run them is described in 
 the "Running" section.
 
 
@@ -176,11 +171,6 @@ check out the
 [configuration section of the first tutorial](https://github.com/routeflow/RouteFlow/wiki/Tutorial-1:-rftest1#configuration-file) 
 and the guide on 
 [how to create your virtual environment](https://github.com/routeflow/RouteFlow/wiki/Virtual-environment-creation).
-
-See the `build.sh` script for advanced options. You'll probably want to use it 
-if you are doing research or exploring some new feature. See its 
-[source](https://github.com/routeflow/RouteFlow/blob/master/build.sh) for more 
-information.
 
 
 # Support
