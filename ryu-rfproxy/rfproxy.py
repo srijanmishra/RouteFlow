@@ -19,6 +19,7 @@ from ryu.lib import hub
 from ryu.lib.mac import *
 from ryu.lib.dpid import *
 from ryu.lib.packet.ethernet import ethernet
+from ryu.utils import hex_array
 
 log = logging.getLogger('ryu.app.rfproxy')
 

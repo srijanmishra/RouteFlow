@@ -25,3 +25,5 @@ class RFProtocolFactory(IPC.IPCMessageFactory):
             return DataPlaneLink()
         if type_ == INTERFACE_REGISTER:
             return InterfaceRegister()
+        if type_ == METER_MOD:
+            return MeterMod()

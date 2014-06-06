@@ -19,6 +19,7 @@ from rflib.types.Match import *
 from rflib.types.Instruction import *
 from rflib.types.Action import *
 from rflib.types.Option import *
+from rflib.types.Meter import *
 from rflib.components.resources import *
 
 from rftable import *

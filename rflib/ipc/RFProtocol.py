@@ -3,6 +3,8 @@ import bson
 from rflib.types.Match import Match
 from rflib.types.Action import Action
 from rflib.types.Option import Option
+from rflib.types.Meter import Meter
+from rflib.types.Instruction import Instruction
 from MongoIPC import MongoIPCMessage
 
 format_id = lambda dp_id: hex(dp_id).rstrip('L')
@@ -684,10 +686,16 @@ class RouteMod(MongoIPCMessage):
 class MeterMod(MongoIPCMessage):
     _FLAGS_KBPS = 1
     _FLAGS_PKTPS = 2
-    _FLAGS_BURST = 3
-    _FLAGS_STATS = 4
+    _FLAGS_BURST = 4
+    _FLAGS_STATS = 8
+
+    _COMMAND_ADD = 0
+    _COMMAND_MODIFY = 1
+    _COMMAND_DELETE = 2
+
     
-    def __init__(self, meter_id=None, meter_command=None, meter_flags=None, meter_bands=None):
+    def __init__(self, id=None, meter_id=None, meter_command=None, meter_flags=None, meter_bands=None):
+        self.set_id(id)
         self.set_meter_id(meter_id)
         self.set_meter_command(meter_command)
         self.set_meter_flags(meter_flags)
@@ -695,6 +703,16 @@ class MeterMod(MongoIPCMessage):
 
     def get_type(self):
         return METER_MOD
+
+    def get_id(self):
+        return self.id
+
+    def set_id(self, id):
+        id = 0 if id is None else id
+        try:
+            self.id = int(id)
+        except:
+            self.id = 0
 
     def get_meter_command(self):
         return self.meter_command
@@ -766,7 +784,7 @@ class MeterMod(MongoIPCMessage):
         return bson.BSON.encode(self.get_dict())
 
     def __str__(self):
-        s = "RouteMod\n"
+        s = "MeterMod\n"
         s += "  meter_id: " + str(self.get_meter_id()) + "\n"
         s += "  meter_command: " + str(self.get_meter_command()) + "\n"
         s += "  meter_bands:\n"
