@@ -2,6 +2,7 @@ import logging
 
 from rflib.defs import *
 from binascii import *
+from rflib.types.TLV import *
 from rflib.types.Match import *
 from rflib.types.Action import *
 from rflib.types.Instruction import *
@@ -70,9 +71,11 @@ def create_default_group_mod(dp, group_id, group_command, group_type):
 
 
 def create_default_meter_mod(dp, meter_id, meter_command, meter_flags):
-    if meter_command == RMT_ADD:
+    if meter_command == 0:
         command = dp.ofproto.OFPMC_ADD
-    elif meter_command == RMT_DELETE:
+    elif meter_command == 1:
+        command = dp.ofproto.OFPMC_MODIFY
+    elif meter_command == 2:
         command = dp.ofproto.OFPMC_DELETE
     bands = [dp.ofproto_parser.OFPMeterBandDrop(0, 0)]
     meter_mod = dp.ofproto_parser.OFPMeterMod(dp, command, meter_flags, meter_id, bands)
@@ -222,22 +225,21 @@ def add_meter_bands(meter_mod, meter_bands_dict):
         meter_prec_level = None 
         for attrib in meter_bands_dict[meter_band_type]:
             meter_band_attrib = Meter.from_dict(attrib)
-            if meter_band_attrib._type == Meter.RFMT_TYPE:
-                meter_type = meter_band_attrib._value 
-            if meter_band_attrib._type == Meter.RFMT_RATE:
-                meter_rate = meter_band_attrib._value
-            if meter_band_attrib._type == Meter.RFMT_BURST:
-                meter_burst = meter_band_attrib._value
-            if meter_band_attrib._type == Meter.RFMT_PREC_LEVEL:
-                meter_prec_level = meter_band_attrib._value
-            if meter_band_attrib._type == Meter.RFMT_EXP:
-                meter_exp = meter_band_attrib._value
-
-        if meter_band_type == Meter._TYPE_DROP:
+            if meter_band_attrib._type == RFMT_TYPE:
+                meter_type = bin_to_int(meter_band_attrib._value)
+            if meter_band_attrib._type == RFMT_RATE:
+                meter_rate = bin_to_int(meter_band_attrib._value)
+            if meter_band_attrib._type == RFMT_BURST:
+                meter_burst = bin_to_int(meter_band_attrib._value)
+            if meter_band_attrib._type == RFMT_PREC_LEVEL:
+                meter_prec_level = bin_to_int(meter_band_attrib._value)
+            if meter_band_attrib._type == RFMT_EXP:
+                meter_exp = bin_to_int(meter_band_attrib._value)
+        if meter_band_type == str(Meter._TYPE_DROP):
             meter_bands.append( parser.OFPMeterBandDrop(meter_rate, meter_burst) )
-        if meter_band_type == Meter._TYPE_DSCP_REMARK:
+        if meter_band_type == str(Meter._TYPE_DSCP_REMARK):
             meter_bands.append( parser.OFPMeterBandDscpRemark(meter_rate, meter_burst, meter_prec_level) )
-        if meter_band_type == Meter._TYPE_EXPERIMENTER:
+        if meter_band_type == str(Meter._TYPE_EXPERIMENTER):
             meter_bands.append( parser.OFPMeterBandExperimenter(meter_rate, meter_burst, meter_exp) )
     meter_mod.bands = meter_bands
 

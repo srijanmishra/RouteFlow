@@ -692,7 +692,6 @@ class MeterMod(MongoIPCMessage):
     _COMMAND_ADD = 0
     _COMMAND_MODIFY = 1
     _COMMAND_DELETE = 2
-
     
     def __init__(self, id=None, meter_id=None, meter_command=None, meter_flags=None, meter_bands=None):
         self.set_id(id)
@@ -758,11 +757,11 @@ class MeterMod(MongoIPCMessage):
         self.meter_bands[meter_band_type] = []
 
     def add_meter_bands(self, meter_band_type, meter_band_attrib):
-        if meter_band_type in self.meter_bands.keys():
-            self.meter_bands[meter_band_type].append(meter_band_attrib.to_dict())
+        if str(meter_band_type) in self.meter_bands.keys():
+            self.meter_bands[str(meter_band_type)].append(meter_band_attrib.to_dict())
         else:
-            self.add_meter_band(meter_band_type)
-            self.meter_bands[meter_band_type].append(meter_band_attrib.to_dict())
+            self.add_meter_band(str(meter_band_type))
+            self.meter_bands[str(meter_band_type)].append(meter_band_attrib.to_dict())
 
     def from_dict(self, data):
         self.set_meter_id(data["meter_id"])

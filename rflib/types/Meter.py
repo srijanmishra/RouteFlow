@@ -20,7 +20,7 @@ typeStrings = {
 class Meter(TLV):
     _TYPE_DROP = 1
     _TYPE_DSCP_REMARK = 2
-    _TYPE_EXPERIMENTER = 3
+    _TYPE_EXPERIMENTER = 0xFFFF
     
     def __init__(self, meterType=None, value=None):
         super(Meter, self).__init__(meterType, self.type_to_bin(meterType, value))
