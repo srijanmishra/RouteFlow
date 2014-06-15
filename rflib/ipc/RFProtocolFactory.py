@@ -27,3 +27,5 @@ class RFProtocolFactory(IPC.IPCMessageFactory):
             return InterfaceRegister()
         if type_ == METER_MOD:
             return MeterMod()
+        if type_ == GROUP_MOD:
+            return GroupMod()

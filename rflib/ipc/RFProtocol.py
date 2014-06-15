@@ -4,6 +4,7 @@ from rflib.types.Match import Match
 from rflib.types.Action import Action
 from rflib.types.Option import Option
 from rflib.types.Meter import Meter
+from rflib.types.Group import Group
 from rflib.types.Instruction import Instruction
 from MongoIPC import MongoIPCMessage
 
@@ -795,15 +796,20 @@ class MeterMod(MongoIPCMessage):
 
 
 class GroupMod(MongoIPCMessage):
-    _TYPE_ALL = 1
-    _TYPE_SELECT = 2
-    _TYPE_INDIRECT = 3
-    _TYPE_FF = 4
+    _TYPE_ALL = 0
+    _TYPE_SELECT = 1
+    _TYPE_INDIRECT = 2
+    _TYPE_FF = 3
 
-    def __init__(self, group_id=None, group_command=None, group_type=None,
+    _COMMAND_ADD = 0
+    _COMMAND_MODIFY = 1
+    _COMMAND_DELETE = 2
+
+    def __init__(self, id=None, group_id=None, group_command=None, group_type=None,
                  group_actions=None, group_buckets=None):
         self.group_bucket_actions_id = 1
         self.group_bucket_id = 1
+        self.set_id(id)
         self.set_group_id(group_id)
         self.set_group_command(group_command)
         self.set_group_type(group_type)
@@ -812,6 +818,16 @@ class GroupMod(MongoIPCMessage):
 
     def get_type(self):
         return GROUP_MOD
+
+    def get_id(self):
+        return self.id
+
+    def set_id(self, id):
+        id = 0 if id is None else id
+        try:
+            self.id = int(id)
+        except:
+            self.id = 0
 
     def get_group_id(self):
         return self.group_id
@@ -903,7 +919,7 @@ class GroupMod(MongoIPCMessage):
         return bson.BSON.encode(self.get_dict())
 
     def __str__(self):
-        s = "RouteMod\n"
+        s = "GroupMod\n"
         s += "  group_id: " + str(self.get_group_id()) + "\n"
         s += "  group_command: " + str(self.get_group_command()) + "\n"
         s += "  group_actions:\n"
