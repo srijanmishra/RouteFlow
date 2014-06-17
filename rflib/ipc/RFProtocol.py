@@ -870,13 +870,13 @@ class GroupMod(MongoIPCMessage):
             self.group_actions = dict()
 
     def add_group_bucket_action(self, group_bucket_actions_id):
-        self.group_actions[group_bucket_actions_id] = []
+        self.group_actions[str(group_bucket_actions_id)] = []
     
     def add_group_bucket_action_attribs(self, group_bucket_actions_id, group_action_attrib):
-        if group_bucket_actions_id not in self.group_actions.keys():
+        if str(group_bucket_actions_id) not in self.group_actions.keys():
             self.add_group_bucket_action(group_bucket_actions_id)
-        if group_bucket_actions_id in self.group_actions.keys(): 
-            self.group_actions[group_bucket_actions_id].append(group_action_attrib.to_dict())
+        else: 
+            self.group_actions[str(group_bucket_actions_id)].append(group_action_attrib.to_dict())
 
     def get_group_buckets(self):
         return self.group_buckets
@@ -890,16 +890,17 @@ class GroupMod(MongoIPCMessage):
 
     def add_group_bucket(self):
         self.group_bucket_id += 1
-        self.group_buckets[self.group_bucket_id] = []
+        self.group_buckets[str(self.group_bucket_id)] = []
         return self.group_bucket_id
 
     def add_group_bucket_attribs(self, group_bucket_id, group_bucket_attribs):
-        if group_bucket_id in self.group_buckets.keys(): 
-            self.group_buckets[group_bucket_id].append(group_bucket_attribs.to_dict())
+        if str(group_bucket_id) in self.group_buckets.keys(): 
+            self.group_buckets[str(group_bucket_id)].append(group_bucket_attribs.to_dict())
 
     def from_dict(self, data):
         self.set_group_id(data["group_id"])
         self.set_group_command(data["group_command"])
+        self.set_group_type(data["group_type"])
         self.set_group_actions(data["group_actions"])
         self.set_group_buckets(data["group_buckets"])
 
@@ -907,6 +908,7 @@ class GroupMod(MongoIPCMessage):
         data = {}
         data["group_id"] = str(self.get_group_id())
         data["group_command"] = str(self.get_group_command())
+        data["group_type"] = str(self.get_group_type())
         data["group_actions"] = self.get_group_actions()
         data["group_buckets"] = self.get_group_buckets()
         return data
@@ -922,9 +924,11 @@ class GroupMod(MongoIPCMessage):
         s = "GroupMod\n"
         s += "  group_id: " + str(self.get_group_id()) + "\n"
         s += "  group_command: " + str(self.get_group_command()) + "\n"
+        s += "  group_type: " + str(self.get_group_type()) + "\n"
         s += "  group_actions:\n"
         for group_action in self.get_group_actions():
-            s += "    " + str(Action.from_dict(group_action)) + "\n"
+            for group_action_attrib in self.group_actions[group_action]:
+                s += "    " + str(Action.from_dict(group_action_attrib)) + "\n"
         s += "  group_buckets:\n"
         group_buckets = self.get_group_buckets()
         for group_bucket_type in group_buckets.keys():

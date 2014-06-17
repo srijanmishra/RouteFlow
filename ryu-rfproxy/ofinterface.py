@@ -60,9 +60,11 @@ def create_default_group_mod(dp, group_id, group_command, group_type):
     watch_group = 0
     dst_port= 0
     buckets = []
-    if group_command == RMT_ADD:
+    if group_command == 0:
         command = dp.ofproto.OFPGC_ADD
-    elif group_command == RMT_DELETE:
+    elif group_command == 1:
+        command = dp.ofproto.OFPGC_MODIFY
+    elif group_command == 2:
         command = dp.ofproto.OFPGC_DELETE
     actions = [dp.ofproto_parser.OFPActionOutput(dst_port, dp.ofproto.OFPCML_NO_BUFFER)]
     buckets = [dp.ofproto_parser.OFPBucket(weight, watch_port, watch_group, actions)]
@@ -251,18 +253,19 @@ def add_group_buckets(group_mod, group_actions, group_buckets):
     for bucket_id in group_buckets.keys():
         for attrib in group_buckets[bucket_id]:
             bucket_attrib = Group.from_dict(attrib)
-            if bucket_attrib._type == Group.RFGP_WEIGHT:
-                bucket_weight = bucket_attrib._value
-            if bucket_attrib._type == Group.RFGP_WATCH_PORT:
-                bucket_watch_port = bucket_attrib._value
-            if bucket_attrib._type == Group.RFGP_WATCH_GROUP:
-                bucket_watch_group = bucket_attrib._value 
-            if bucket_attrib._type == Group.RFGP_ACTIONS:
-                bucket_actions_id = bucket_attrib._value
-                if bucket_actions_id in group_actions.keys():
-                    bucket_actions = add_actions(group_mod, group_actions[bucket_actions_id])
+            if bucket_attrib._type == RFGP_WEIGHT:
+                bucket_weight = bin_to_int(bucket_attrib._value)
+            if bucket_attrib._type == RFGP_WATCH_PORT:
+                bucket_watch_port = bin_to_int(bucket_attrib._value)
+            if bucket_attrib._type == RFGP_WATCH_GROUP:
+                bucket_watch_group = bin_to_int(bucket_attrib._value)
+            if bucket_attrib._type == RFGP_ACTIONS:
+                bucket_actions_id = bin_to_int(bucket_attrib._value)
+                if str(bucket_actions_id) in group_actions.keys():
+                    bucket_actions = add_actions(group_mod, group_actions[str(bucket_actions_id)])
         buckets.append( parser.OFPBucket(bucket_weight, bucket_watch_port,
                                          bucket_watch_group, bucket_actions) )
+
     group_mod.buckets = buckets
 
 
