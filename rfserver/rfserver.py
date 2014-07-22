@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
+import os
 import sys
 import logging
 import binascii
@@ -342,6 +343,14 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
                 rm.add_match(Match.ETHERTYPE(ETHERTYPE_IP))
                 rm.add_match(Match.NW_PROTO(IPPROTO_TCP))
                 rm.add_match(Match.TP_SRC(TPORT_BGP))
+            elif operation_id == DC_BGP_PASSIVEV6:
+                rm.add_match(Match.ETHERTYPE(ETHERTYPE_IPV6))
+                rm.add_match(Match.NW_PROTO(IPPROTO_TCP))
+                rm.add_match(Match.TP_DST(TPORT_BGP))
+            elif operation_id == DC_BGP_ACTIVEV6:
+                rm.add_match(Match.ETHERTYPE(ETHERTYPE_IPV6))
+                rm.add_match(Match.NW_PROTO(IPPROTO_TCP))
+                rm.add_match(Match.TP_SRC(TPORT_BGP))
             elif operation_id == DC_LDP_PASSIVE:
                 rm.add_match(Match.ETHERTYPE(ETHERTYPE_IP))
                 rm.add_match(Match.NW_PROTO(IPPROTO_TCP))
@@ -374,9 +383,12 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
             self.send_datapath_config_message(ct_id, dp_id,
                                               DC_CLEAR_FLOW_TABLE)
             # TODO: enforce order: clear should always be executed first
+            self.send_datapath_config_message(ct_id, dp_id, DC_DROP_ALL)
             self.send_datapath_config_message(ct_id, dp_id, DC_OSPF)
             self.send_datapath_config_message(ct_id, dp_id, DC_BGP_PASSIVE)
+            self.send_datapath_config_message(ct_id, dp_id, DC_BGP_PASSIVEV6)
             self.send_datapath_config_message(ct_id, dp_id, DC_BGP_ACTIVE)
+            self.send_datapath_config_message(ct_id, dp_id, DC_BGP_ACTIVEV6)
             self.send_datapath_config_message(ct_id, dp_id, DC_RIPV2)
             self.send_datapath_config_message(ct_id, dp_id, DC_ARP)
             self.send_datapath_config_message(ct_id, dp_id, DC_ICMP)
@@ -417,8 +429,8 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
     def reset_vm_port(self, vm_id, vm_port):
         if vm_id is None:
             return
-        self.ipc.send(RFCLIENT_RFSERVER_CHANNEL, str(vm_id),
-                      PortConfig(vm_id=vm_id, vm_port=vm_port, operation_id=1))
+        self.ipc.send(RFCLIENT_RFSERVER_CHANNEL, str(vm_id), 
+                      PortConfig(vm_id=vm_id, vm_port=vm_port, operation_id=PCT_RESET))
         self.log.info("Resetting client port (vm_id=%s, vm_port=%i)" %
                       (format_id(vm_id), vm_port))
 
@@ -437,6 +449,9 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
             self.topologies.modify_virtual_topology_mapping(self.topologies.get_topology(DEFAULT_TOPO_VIRT_ID, 'virtual'), vs_id, vs_port, entry.dp_id, entry.dp_port)
             self.topologies.modify_physical_topology_mapping(self.topologies.get_topology(DEFAULT_TOPO_PHY_ID, 'physical'), vs_id, vs_port, vm_id, vm_port)
             self.ipc.send(RFSERVER_RFPROXY_CHANNEL, str(entry.ct_id), msg)
+            msg = PortConfig(vm_id=vm_id, vm_port=vm_port,
+                             operation_id=PCT_MAP_SUCCESS)
+            self.ipc.send(RFCLIENT_RFSERVER_CHANNEL, str(entry.vm_id), msg)
             self.log.info("Mapping client-datapath association "
                           "(vm_id=%s, vm_port=%i, dp_id=%s, "
                           "dp_port=%i, vs_id=%s, vs_port=%i)" %
@@ -449,10 +464,13 @@ if __name__ == "__main__":
                 'listens for route updates, and configures flow tables'
     epilog='Report bugs to: https://github.com/routeflow/RouteFlow/issues'
 
+    config = os.path.dirname(os.path.realpath(__file__)) + "/config.csv"
+    islconf = os.path.dirname(os.path.realpath(__file__)) + "/islconf.csv"
+
     parser = argparse.ArgumentParser(description=description, epilog=epilog)
-    parser.add_argument('configfile',
+    parser.add_argument('configfile', default=config,
                         help='VM-VS-DP mapping configuration file')
-    parser.add_argument('-i', '--islconfig',
+    parser.add_argument('-i', '--islconfig', default=islconf,
                         help='ISL mapping configuration file')
 
     args = parser.parse_args()

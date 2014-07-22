@@ -17,7 +17,7 @@ RFMONITOR_ID = "rfmonitor"
 DEFAULT_RFCLIENT_INTERFACE = "eth0"
 
 RFVS_PREFIX = 0x72667673
-is_rfvs = lambda dp_id: not ((dp_id >> 16) ^ RFVS_PREFIX)
+is_rfvs = lambda dp_id: not ((dp_id >> 32) ^ RFVS_PREFIX)
 
 RF_ETH_PROTO = 0x0A0A # RF ethernet protocol
 
@@ -42,12 +42,18 @@ DC_ICMP = 8			# ICMP protocol
 DC_LDP_PASSIVE = 9		# LDP protocol
 DC_LDP_ACTIVE = 10		# LDP protocol
 DC_ICMPV6 = 11			# ICMPv6 protocol
+DC_BGP_PASSIVEV6 = 12
+DC_BGP_ACTIVEV6 = 13
 DC_ALL = 255			# Send all traffic to the controller
 
 RMT_ADD = 0			# Add flow to datapath
 RMT_DELETE = 1			# Remove flow from datapath
 #RMT_MODIFY = 2		# Modify existing flow (Unimplemented)
 
+# Port Configuration Types
+PCT_MAP_REQUEST = 0     # (deprecated) Request for a mapping packet.
+PCT_RESET = 1           # Reset the client port to inactive.
+PCT_MAP_SUCCESS = 2     # Mapping was successful; port can be brought up.
 
 PC_MAP = 0
 PC_RESET = 1
