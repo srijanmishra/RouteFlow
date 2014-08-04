@@ -5,7 +5,7 @@ import logging
 from ofinterface import *
 
 import rflib.ipc.IPC as IPC
-import rflib.ipc.MongoIPC as MongoIPC
+import rflib.ipc.IPCService as IPCService
 from rflib.ipc.RFProtocol import *
 from rflib.ipc.RFProtocolFactory import RFProtocolFactory
 from rflib.defs import *
@@ -68,10 +68,11 @@ class Table:
     # to the wrong places. We have to fix this.
 
 
-def hub_thread_wrapper(target, args=()):
-    result = hub.spawn(target, *args)
-    result.start = lambda: target
-    return result
+class HubThreading(object):
+    Thread = staticmethod(threading.Thread)
+    Event = staticmethod(hub.Event)
+    sleep = staticmethod(hub.sleep)
+    name = "HubThreading"
 
 # IPC message Processing
 class RFProcessor(IPC.IPCMessageProcessor):
@@ -166,14 +167,19 @@ class RFProxy(app_manager.RyuApp):
         self.switches = kwargs['switches']
         self.rfprocess = RFProcessor(self.switches, self.table)
         
-        self.ipc = MongoIPC.MongoIPCMessageService(MONGO_ADDRESS,
-                                                   MONGO_DB_NAME, str(self.ID),
-                                                   hub_thread_wrapper,
-                                                   hub.sleep)
-
+        self.ipc = IPCService.for_proxy(str(self.ID), HubThreading)
         self.ipc.listen(RFSERVER_RFPROXY_CHANNEL, RFProtocolFactory(),
                         self.rfprocess, False)
         log.info("RFProxy running.")
+
+    def register_ports(self, dp, ports):
+        for port in ports:
+            if port.port_no <= dp.ofproto.OFPP_MAX:
+                msg = DatapathPortRegister(ct_id=self.ID, dp_id=dp.id,
+                                           dp_port=port.port_no)
+                self.ipc.send(RFSERVER_RFPROXY_CHANNEL, RFSERVER_ID, msg)
+                log.info("Registering datapath port (dp_id=%s, dp_port=%d)",
+                         dpid_to_str(dp.id), port.port_no)
 
     #Event handlers
     @set_ev_cls(event.EventSwitchEnter, MAIN_DISPATCHER)
@@ -190,8 +196,12 @@ class RFProxy(app_manager.RyuApp):
                 log.info("INFO:rfproxy:Registering datapath port (dp_id=%s, dp_port=%d)",
                          dpid_to_str(dpid), port.port_no)
 
-
-
+    @set_ev_cls(ofp_event.EventOFPPortDescStatsReply, MAIN_DISPATCHER)
+    def handler_desc_stats_reply(self, ev):
+        msg = ev.msg
+        dp = msg.datapath
+        ports = msg.body
+        self.register_ports(dp, ports)
 
     @set_ev_cls(event.EventSwitchLeave, MAIN_DISPATCHER)
     def handler_datapath_leave(self, ev):

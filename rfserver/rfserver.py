@@ -12,7 +12,7 @@ import argparse
 from bson.binary import Binary
 
 import rflib.ipc.IPC as IPC
-import rflib.ipc.MongoIPC as MongoIPC
+import rflib.ipc.IPCService as IPCService
 from rflib.ipc.RFProtocol import *
 from rflib.ipc.RFProtocolFactory import RFProtocolFactory
 from rflib.defs import *
@@ -49,11 +49,7 @@ class RFServer(RFProtocolFactory, IPC.IPCMessageProcessor):
         ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
         self.log.addHandler(ch)
 
-        self.ipc = MongoIPC.MongoIPCMessageService(MONGO_ADDRESS,
-                                                   MONGO_DB_NAME,
-                                                   RFSERVER_ID,
-                                                   threading.Thread,
-                                                   time.sleep)
+        self.ipc = IPCService.for_server(RFSERVER_ID)
         
         self.topologies = Topologies()
         self.topologies.register_topology(DEFAULT_TOPO_PHY_ID, 'physical', ct_id=DEFAULT_CT_ID)

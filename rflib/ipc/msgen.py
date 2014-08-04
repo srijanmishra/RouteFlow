@@ -210,7 +210,7 @@ def genCPP(messages, fname):
     
     g.addLine("#include \"{0}.h\"".format(fname))
     g.blankLine()
-    g.addLine("#include <mongo/client/dbclient.h>")
+    g.addLine("#include <mongo/bson/bson.h>")
     g.blankLine()
     for name, msg in messages:
         g.addLine("{0}::{0}() {{".format(name))
@@ -358,10 +358,11 @@ def genCPPFactory(messages, fname):
 def genPy(messages, fname):
     g = CodeGenerator()
 
-    g.addLine("import bson")    
+    g.addLine("import bson")
+    g.blankLine()
     for tlv in ["Match","Action","Option"]:
         g.addLine("from rflib.types.{0} import {0}".format(tlv))
-    g.addLine("from MongoIPC import MongoIPCMessage")
+    g.addLine("from IPC import IPCMessage")
     g.blankLine()
     g.addLine("format_id = lambda dp_id: hex(dp_id).rstrip('L')")
     g.blankLine()
@@ -373,7 +374,7 @@ def genPy(messages, fname):
     g.blankLine()
     for name, msg in messages:
         g.blankLine()
-        g.addLine("class {0}(MongoIPCMessage):".format(name))
+        g.addLine("class {0}(IPCMessage):".format(name))
         g.increaseIndent()
         g.addLine("def __init__(self, {0}):".format(", ".join([f + "=None" for t, f in msg])))
         g.increaseIndent()

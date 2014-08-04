@@ -6,7 +6,7 @@ from rflib.types.Option import Option
 from rflib.types.Meter import Meter
 from rflib.types.Group import Group
 from rflib.types.Instruction import Instruction
-from MongoIPC import MongoIPCMessage
+from IPC import IPCMessage
 
 format_id = lambda dp_id: hex(dp_id).rstrip('L')
 
@@ -25,7 +25,7 @@ GROUP_MOD = 11
 INTERFACE_REGISTER = 12
 
 
-class PortRegister(MongoIPCMessage):
+class PortRegister(IPCMessage):
     def __init__(self, vm_id=None, vm_port=None, hwaddress=None):
         self.set_vm_id(vm_id)
         self.set_vm_port(vm_port)
@@ -91,7 +91,7 @@ class PortRegister(MongoIPCMessage):
         return s
 
 
-class InterfaceRegister(MongoIPCMessage):
+class InterfaceRegister(IPCMessage):
     def __init__(self, name=None, vm_id=None, vm_port=None, address=None, netmask=None, hwaddress=None):
         self.set_name(name)
         self.set_vm_id(vm_id)
@@ -198,7 +198,7 @@ class InterfaceRegister(MongoIPCMessage):
         s += "  hwaddress: " + str(self.get_hwaddress()) + "\n"
         return s
 
-class PortConfig(MongoIPCMessage):
+class PortConfig(IPCMessage):
     def __init__(self, vm_id=None, vm_port=None, operation_id=None):
         self.set_vm_id(vm_id)
         self.set_vm_port(vm_port)
@@ -264,7 +264,7 @@ class PortConfig(MongoIPCMessage):
         return s
 
 
-class DatapathPortRegister(MongoIPCMessage):
+class DatapathPortRegister(IPCMessage):
     def __init__(self, ct_id=None, dp_id=None, dp_port=None):
         self.set_ct_id(ct_id)
         self.set_dp_id(dp_id)
@@ -320,7 +320,7 @@ class DatapathPortRegister(MongoIPCMessage):
         self.from_dict(data)
 
     def to_bson(self):
-        return bson.BSON.encode(self.get_dict())
+        return bson.BSON.encode(self.to_dict())
 
     def __str__(self):
         s = "DatapathPortRegister\n"
@@ -330,7 +330,7 @@ class DatapathPortRegister(MongoIPCMessage):
         return s
 
 
-class DatapathDown(MongoIPCMessage):
+class DatapathDown(IPCMessage):
     def __init__(self, ct_id=None, dp_id=None):
         self.set_ct_id(ct_id)
         self.set_dp_id(dp_id)
@@ -382,7 +382,7 @@ class DatapathDown(MongoIPCMessage):
         return s
 
 
-class VirtualPlaneMap(MongoIPCMessage):
+class VirtualPlaneMap(IPCMessage):
     def __init__(self, vm_id=None, vm_port=None, vs_id=None, vs_port=None):
         self.set_vm_id(vm_id)
         self.set_vm_port(vm_port)
@@ -462,7 +462,7 @@ class VirtualPlaneMap(MongoIPCMessage):
         return s
 
 
-class DataPlaneMap(MongoIPCMessage):
+class DataPlaneMap(IPCMessage):
     def __init__(self, ct_id=None, dp_id=None, dp_port=None, vs_id=None, vs_port=None):
         self.set_ct_id(ct_id)
         self.set_dp_id(dp_id)
@@ -555,7 +555,7 @@ class DataPlaneMap(MongoIPCMessage):
         s += "  vs_port: " + str(self.get_vs_port()) + "\n"
         return s
 
-class RouteMod(MongoIPCMessage):
+class RouteMod(IPCMessage):
     def __init__(self, mod=None, id=None, matches=None, 
                  actions=None, instructions=None, options=None):
         self.set_mod(mod)
@@ -684,7 +684,7 @@ class RouteMod(MongoIPCMessage):
         return s
 
 
-class MeterMod(MongoIPCMessage):
+class MeterMod(IPCMessage):
     _FLAGS_KBPS = 1
     _FLAGS_PKTPS = 2
     _FLAGS_BURST = 4
@@ -795,7 +795,7 @@ class MeterMod(MongoIPCMessage):
         return s
 
 
-class GroupMod(MongoIPCMessage):
+class GroupMod(IPCMessage):
     _TYPE_ALL = 0
     _TYPE_SELECT = 1
     _TYPE_INDIRECT = 2
@@ -937,7 +937,7 @@ class GroupMod(MongoIPCMessage):
         return s
 
 
-class ControllerRegister(MongoIPCMessage):
+class ControllerRegister(IPCMessage):
     def __init__(self, ct_addr=None, ct_port=None, ct_role=None):
         self.set_ct_addr(ct_addr)
         self.set_ct_port(ct_port)
@@ -1003,7 +1003,7 @@ class ControllerRegister(MongoIPCMessage):
         return s
 
 
-class ElectMaster(MongoIPCMessage):
+class ElectMaster(IPCMessage):
     def __init__(self, ct_addr=None, ct_port=None):
         self.set_ct_addr(ct_addr)
         self.set_ct_port(ct_port)
@@ -1055,7 +1055,7 @@ class ElectMaster(MongoIPCMessage):
         return s
 
 
-class DataPlaneLink(MongoIPCMessage):
+class DataPlaneLink(IPCMessage):
     def __init__(self, ct_id=None, dp_src_id=None, dp_src_port=None, dp_dst_id=None, dp_dst_port=None, is_removal=False):
         self.set_ct_id(ct_id)
         self.set_dp_src_id(dp_src_id)
@@ -1146,7 +1146,7 @@ class DataPlaneLink(MongoIPCMessage):
         self.from_dict(data)
 
     def to_bson(self):
-        return bson.BSON.encode(self.get_dict())
+        return bson.BSON.encode(self.to_dict())
 
     def __str__(self):
         s = "DataPlaneLink\n"
