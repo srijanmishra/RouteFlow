@@ -126,13 +126,22 @@ def add_matches(flow_mod, matches):
         elif match._type == RFMT_ETHERTYPE:
             flow_mod.match.set_dl_type(bin_to_int(match._value))
         elif match._type == RFMT_NW_PROTO:
-            flow_mod.match.set_ip_proto(bin_to_int(match._value))
+            ip_proto = bin_to_int(match._value)
+            flow_mod.match.set_ip_proto(ip_proto)
         elif match._type == RFMT_TP_SRC:
-            flow_mod.match.set_ip_proto(IPPROTO_TCP)
-            flow_mod.match.set_tcp_src(bin_to_int(match._value))
+            if ip_proto == IPPROTO_TCP:
+                flow_mod.match.set_tcp_src(bin_to_int(match._value))
+            elif ip_proto == IPPROTO_UDP:
+                flow_mod.match.set_udp_src(bin_to_int(match._value))
+            else:
+                log.warning("Failed to match L4 proto src_port")
         elif match._type == RFMT_TP_DST:
-            flow_mod.match.set_ip_proto(IPPROTO_TCP)
-            flow_mod.match.set_tcp_dst(bin_to_int(match._value))
+            if ip_proto == IPPROTO_TCP:
+                flow_mod.match.set_tcp_dst(bin_to_int(match._value))
+            elif ip_proto == IPPROTO_UDP:
+                flow_mod.match.set_udp_dst(bin_to_int(match._value))
+            else:
+                log.warning("Failed to match L4 proto dst_port")
         elif match._type == RFMT_IN_PORT:
             flow_mod.match.set_in_port(bin_to_int(match._value))
         elif TLV.optional(match):
