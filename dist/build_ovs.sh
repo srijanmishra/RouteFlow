@@ -5,7 +5,7 @@ OVS_GIT="git://openvswitch.org/openvswitch"
 OVS_BRANCH="origin/master"
 
 OVS_COMMON="linux-headers-generic"
-OVS_BUILD_DEPS="dh-autoreconf pkg-config"
+OVS_BUILD_DEPS="dh-autoreconf pkg-config "
 OVS_BINARY="openvswitch-switch openvswitch-datapath-source module-assistant"
 
 install_ovs() {
@@ -31,6 +31,14 @@ install_ovs() {
     $SUPER rm -f /usr/local/etc/openvswitch/conf.db
     $SUPER ovsdb-tool create /usr/local/etc/openvswitch/conf.db \
         vswitchd/vswitch.ovsschema || return 1
+    $SUPER ovsdb-server --remote=punix:/usr/local/var/run/openvswitch/db.sock \
+                 --remote=db:Open_vSwitch,Open_vSwitch,manager_options \
+                 --private-key=db:Open_vSwitch,SSL,private_key \
+                 --certificate=db:Open_vSwitch,SSL,certificate \
+                 --bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert \
+                 --pidfile --detach
+    $SUPER ovs-vsctl --no-wait init
+    $SUPER ovs-vswitchd --pidfile --detach
 
     return 0
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-RYU_GIT="https://github.com/routeflow/ryu-rfproxy.git"
+RYU_GIT="https://github.com/raphaelvrosa/ryu-rfproxy.git"
 RYU_BRANCH="origin/vandervecken"
 
 RYU_DEPS="libxml2-dev libxslt-dev python-greenlet python-eventlet \

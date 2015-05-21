@@ -18,7 +18,7 @@ APT_OPTS="-y"
 PIP_OPTS=""
 
 ROUTEFLOW_GIT="https://github.com/routeflow/RouteFlow.git"
-DEPENDENCIES="build-essential git-core libboost-dev libboost-dev \
+DEPENDENCIES="build-essential autoconf git-core libboost-dev libboost-dev \
     libboost-program-options-dev libboost-thread-dev \
     libboost-filesystem-dev libboost-system-dev iproute-dev python-dev \
     python-pip python-bson"
@@ -42,6 +42,7 @@ usage() {
     echo "  -g    Build git versions of dependencies"
     echo "  -u    Update (rebuild) dependencies even if they have been built"
     echo "  -z    Use ZeroMQ for IPC"
+    echo "  -n    Build Mininet"
     echo;
     echo "Dependency version options:"
     echo "  Versions can be specified as \"deb\", \"X.Y.Z\" or \"git\""
@@ -80,11 +81,11 @@ get_versions() {
         # Versions prior to Ubuntu 12.04 don't supply MongoDB-2.0 and OVS.
         if (verlt $version "12.04"); then
             MONGO_VERSION="2.0.9"
-            OVS_VERSION="1.10.0"
+            OVS_VERSION="2.3.1"
         fi
 
         if (echo "$*" | grep -q "ryu"); then
-            OVS_VERSION="1.10.0";
+            OVS_VERSION="2.3.1";
         fi
 
         if (verlt $version "12.04"); then
@@ -115,6 +116,7 @@ parse_opts() {
             m) MONGO_VERSION=${OPTARG};;
             o) OVS_VERSION=${OPTARG};;
             z) USE_MONGO=0;;
+            n) MININET=1;;
             *) usage;
                exit 1;;
         esac
@@ -206,6 +208,9 @@ main() {
     print_status "Fetching dependencies"
     pkg_install "$DEPENDENCIES"
     get_ovs "$OVS_VERSION"
+
+    if [ $MININET -eq 1 ]; then
+        get_mininet
 
     if [ $USE_MONGO -eq 1 ]; then
         $SUPER pip install "pymongo"
