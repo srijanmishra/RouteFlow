@@ -61,8 +61,9 @@ fetch() {
     print_status "Getting $NAME"
     if [ "$2" = "git" ] || [ "$2" = "rfproxy" ]; then
         if [ "$1" = "mininet" ] ; then
-            $DO git clone $3 $1 || return 1
-        elif [ ! -e $NAME ]; then
+            NAME="$1"
+        fi
+        if [ ! -e $NAME ]; then
             $DO git clone $3 $NAME || return 1
         fi
         $DO cd $NAME
