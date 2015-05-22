@@ -14,7 +14,7 @@ install_mininet() {
 ##
 build_mininet() {
 
-    fetch "mininet" $MN_GIT $MN_BRANCH ||
+    fetch "mininet" "git" $MN_GIT $MN_BRANCH ||
         fail "Couldn't fetch Mininet"
 
     if [ $FETCH_ONLY -ne 1 ]; then

@@ -97,7 +97,7 @@ get_versions() {
 }
 
 parse_opts() {
-    while getopts hcfqip:vdsgum:o:z option; do
+    while getopts hcfqipn:vdsgum:o:z option; do
         case "${option}" in
             c) DO="";
                SUPER="sudo";;
@@ -192,7 +192,7 @@ main() {
 
     # Import scripts from dist/
     . $RFDIR/dist/common.sh
-    for app in ovs mongo bson zmq; do
+    for app in ovs mongo bson zmq mininet; do
         . "$RFDIR/dist/build_$app.sh"
     done
 
@@ -211,6 +211,7 @@ main() {
 
     if [ $MININET -eq 1 ]; then
         get_mininet
+    fi
 
     if [ $USE_MONGO -eq 1 ]; then
         $SUPER pip install "pymongo"
