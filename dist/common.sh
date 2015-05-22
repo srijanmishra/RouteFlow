@@ -84,7 +84,11 @@ fetch() {
     fi
 
     if [ -e $NAME ] && [ $FETCH_ONLY -ne 1 ]; then
-        $DO cd $NAME
+        if [ "$NAME" = "mininet" ] ; then
+            NAME="$1"
+        else        
+            $DO cd $NAME
+        fi
     fi
 
     return 0

@@ -5,7 +5,7 @@ MN_BRANCH="origin/master"
 
 install_mininet() {
     print_status "Installing Mininet"
-    $SUPER util/install.sh -fn 
+    ./util/install.sh -fn 
     return 0
 }
 
@@ -20,9 +20,9 @@ build_mininet() {
     if [ $FETCH_ONLY -ne 1 ]; then
         print_status "Building and Installing Mininet"
         install_mininet || fail "Couldn't install Mininet"
-        
-        $DO cd -
     fi
+    $DO cd -
+
 }
 
 get_mininet() {

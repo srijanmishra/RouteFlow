@@ -35,11 +35,13 @@ install_ovs() {
                  --remote=db:Open_vSwitch,Open_vSwitch,manager_options \
                  --private-key=db:Open_vSwitch,SSL,private_key \
                  --certificate=db:Open_vSwitch,SSL,certificate \
+                 --log-file=/var/log/openvswitch/ovs-vswitchd.log \
                  --bootstrap-ca-cert=db:Open_vSwitch,SSL,ca_cert \
-                 --pidfile --detach
+                 -vsyslog:dbg -vfile:dbg --pidfile --detach
     $SUPER ovs-vsctl --no-wait init
-    $SUPER ovs-vswitchd --pidfile --detach
-
+    $SUPER ovs-vswitchd --pidfile --detach \
+                 --log-file=/var/log/openvswitch/ovs-vswitchd.log \
+                 -vconsole:err -vsyslog:info -vfile:info
     return 0
 }
 
