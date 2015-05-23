@@ -140,8 +140,8 @@ done
 ovs-vsctl add-port dp0 rfvmA.4
 ovs-vsctl add-port dp0 rfvmD.4
 ovs-vsctl set Bridge dp0 other-config:datapath-id=7266767372667673
-ovs-vsctl set-controller dp0 tcp:127.0.0.1:$CONTROLLER_PORT
 ovs-vsctl set Bridge dp0 protocols=OpenFlow13
+ovs-vsctl set-controller dp0 tcp:127.0.0.1:$CONTROLLER_PORT
 ovs-ofctl -O OpenFlow13 add-flow dp0 actions=CONTROLLER:65509
 
 echo_bold "---"
