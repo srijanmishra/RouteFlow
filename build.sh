@@ -51,7 +51,7 @@ usage() {
     echo "  -o    Specify the Open vSwitch version to fetch" \
          "(default: $OVS_VERSION)"
     echo;
-    echo "Valid controllers: nox, ryu. Multiple may be" \
+    echo "Valid controllers: nox, ryu, onos. Multiple may be" \
          "specified at once."
     echo "Controllers must be specified at the end of the command."
     echo;
@@ -141,6 +141,7 @@ build_routeflow() {
         case $arg in
             nox) . $RFDIR/dist/build_nox.sh; get_nox;;
             ryu) . $RFDIR/dist/build_ryu.sh; get_ryu;;
+            onos) . $RFDIR/dist/build_onos.sh; get_onos;;
         esac
     done
 
